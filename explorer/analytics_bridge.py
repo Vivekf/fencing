@@ -29,7 +29,7 @@ LEVEL_ORDER = {"Y8": 0, "Y10": 1, "Y12": 2, "Y14": 3, "Cadet": 4, "Junior": 5, "
 def fit():
     ds = load_dataset(str(DB_PATH), core_only=True, since=SINCE,
                       birth_min=BIRTH_MIN, birth_max=BIRTH_MAX)
-    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=200))
+    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=400))
     return ds, fm
 
 
@@ -128,6 +128,23 @@ def skill_trajectory(focal_id: int) -> pd.DataFrame:
     rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s + cterm}
             for mi, s in traj.get(fidx[focal_id], [])]
     return pd.DataFrame(rows)
+
+
+@st.cache_data(show_spinner=False)
+def birth_year_rank(focal_id: int) -> dict | None:
+    """Focal's club-adjusted-ability rank among all rated fencers born in her exact birth
+    year (her true same-age peers — no age confound)."""
+    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    by = {r[0]: r[1] for r in conn.execute("SELECT id, birth_year FROM fencers")}
+    yr = by.get(focal_id)
+    sk = recent_skill_map()
+    if not yr or focal_id not in sk:
+        return None
+    cohort = {f: v for f, v in sk.items() if by.get(f) == yr}
+    fs = cohort[focal_id]
+    vals = np.fromiter(cohort.values(), float)
+    return {"year": int(yr), "n": len(cohort), "rank": int((vals > fs).sum()) + 1,
+            "pct": float((vals < fs).mean() * 100.0), "skill": fs}
 
 
 @st.cache_data(show_spinner=False)

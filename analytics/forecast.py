@@ -38,7 +38,7 @@ def _elo_ratings(ds, K=32.0, scale=400.0, base=1500.0):
 def forecast_event(db_path, focal_id, event_id, *, since="2022-09",
                    birth_min=2013, birth_max=2018, blend_w=0.6, K=32.0):
     ds = load_dataset(db_path, core_only=True, since=since, birth_min=birth_min, birth_max=birth_max)
-    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=200))
+    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=400))
     R, scale = _elo_ratings(ds, K=K)
     fidx = {f: i for i, f in enumerate(fm.fencer_ids)}
 
@@ -123,7 +123,7 @@ def forecast_placement(db_path, focal_id, event_id, *, since="2022-09",
                        birth_min=2013, birth_max=2018, n_sims=4000, de_target=10):
     """Monte-Carlo the event from the fitted model; return (placement array, entrant ids)."""
     ds = load_dataset(db_path, core_only=True, since=since, birth_min=birth_min, birth_max=birth_max)
-    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=200))
+    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=400))
     field, g = event_field_strengths(db_path, fm, ds, event_id, extra_ids=(focal_id,))
     places = S.simulate_placements(
         g, field.index(focal_id), sigma_pool=fm.sigma_pool, sigma_de=fm.sigma_de,

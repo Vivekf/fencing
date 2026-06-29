@@ -100,15 +100,20 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
     st.subheader(f"{focal_name} — Overview")
 
     # Model-estimated standing among her true peer cohort (the lowest level she enters).
+    byr = ab.birth_year_rank(focal_id)
     cohort = ab.eligibility_cohort_rank(focal_id)
-    if cohort:
+    if byr:
         c = st.columns(3)
-        c[0].metric("Estimated ability", f"{cohort['skill']:+.2f}")
-        c[1].metric(f"Rank among {cohort['level']}-eligible", f"#{cohort['rank']} / {cohort['n']}")
-        c[2].metric("Percentile in cohort", f"{cohort['pct']:.0f}%")
-        st.caption(f"Club-adjusted ability (skill + club effect, age-agnostic) vs. all rated "
-                   f"fencers eligible for **{cohort['level']}** (born {cohort['floor']} or "
-                   f"later) — her lowest competing level.")
+        c[0].metric("Estimated ability", f"{byr['skill']:+.2f}")
+        c[1].metric(f"Rank among born-{byr['year']}", f"#{byr['rank']} / {byr['n']}")
+        c[2].metric("Percentile (birth year)", f"{byr['pct']:.0f}%")
+        cap = (f"Club-adjusted ability (skill + club effect, age-agnostic) vs. all rated "
+               f"fencers **born {byr['year']}** (her exact birth year).")
+        if cohort:
+            cap += (f"  For reference, among everyone eligible for **{cohort['level']}** "
+                    f"(born {cohort['floor']}+): #{cohort['rank']} / {cohort['n']} "
+                    f"({cohort['pct']:.0f}th pct).")
+        st.caption(cap)
 
     st.markdown("##### Estimated ability over time")
     tchart = charts.skill_trajectory(ab.skill_trajectory(focal_id))

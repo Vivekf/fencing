@@ -62,6 +62,7 @@ def _target(bout_type: str, age_group: Optional[str]) -> int:
 def load_dataset(
     db_path: str,
     *,
+    weapon: Optional[str] = "epee",
     core_only: bool = True,
     since: Optional[str] = None,
     min_bouts: int = 0,
@@ -71,6 +72,9 @@ def load_dataset(
 ) -> Dataset:
     """Load bouts into a model-ready design frame.
 
+    weapon: keep only bouts in events of this weapon ('epee'|'foil'|'saber'). The bouts
+        table mixes all three; ratings are weapon-specific, so this MUST be set. Defaults
+        to 'epee' (the focal fencer's weapon). None = no filter (all weapons — usually wrong).
     core_only: keep only bouts where BOTH fencers are fully scraped ('done') — the
         subgraph with complete features (birth year + full histories).
     since: keep only bouts on/after this 'YYYY-MM' (or 'YYYY-MM-DD') — trims the near-
@@ -80,9 +84,14 @@ def load_dataset(
     """
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
+    where = "WHERE e.event_date IS NOT NULL"
+    params: list = []
+    if weapon is not None:
+        where += " AND e.weapon = ?"
+        params.append(weapon)
     try:
         df = pd.read_sql_query(
-            """
+            f"""
             SELECT
                 b.event_id, b.fencer_a_id, b.fencer_b_id, b.bout_type,
                 b.fencer_a_score, b.fencer_b_score, b.winner_id,
@@ -94,9 +103,9 @@ def load_dataset(
             JOIN events e   ON e.id = b.event_id
             JOIN fencers fa ON fa.id = b.fencer_a_id
             JOIN fencers fb ON fb.id = b.fencer_b_id
-            WHERE e.event_date IS NOT NULL
+            {where}
             """,
-            conn,
+            conn, params=params,
         )
     finally:
         conn.close()
