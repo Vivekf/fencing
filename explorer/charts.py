@@ -191,20 +191,28 @@ def experience_scatter(data: dict, focal_name: str) -> alt.Chart | None:
 
 
 def skill_trajectory(traj: pd.DataFrame) -> alt.Chart | None:
-    """A fencer's monthly estimated skill over time."""
+    """A fencer's monthly skill over time, with experience-band reference lines (expected
+    skill for her cumulative RYC+ that month, and +0.5/+1/+2σ)."""
     if traj is None or traj.empty:
         return None
-    return (
-        alt.Chart(traj)
-        .mark_line(color=ACCENT, strokeWidth=2.5, point=alt.OverlayMarkDef(color=ACCENT, size=45))
-        .encode(
-            x=alt.X("month:T", title="Month"),
-            y=alt.Y("skill:Q", title="Estimated skill"),
-            tooltip=[alt.Tooltip("month:T", title="Month"),
-                     alt.Tooltip("skill:Q", title="Skill", format="+.2f")],
-        )
-        .properties(height=360)
-    )
+    layers = []
+    if "mean" in traj.columns:
+        labels = {"mean": "exp (for RYC+)", "p05": "+0.5σ", "p1": "+1σ", "p2": "+2σ"}
+        refs = traj.melt(id_vars=["month"], value_vars=list(labels),
+                         var_name="ref", value_name="level")
+        refs["ref"] = refs["ref"].map(labels)
+        layers.append(alt.Chart(refs).mark_line(strokeDash=[5, 3], strokeWidth=1.3, opacity=0.8).encode(
+            x="month:T", y="level:Q",
+            color=alt.Color("ref:N", title="experience band",
+                            scale=alt.Scale(domain=list(labels.values()),
+                                            range=["#9ca3af", "#fbbf24", "#f97316", "#dc2626"]),
+                            legend=alt.Legend(orient="bottom"))))
+    line = alt.Chart(traj).mark_line(
+        color=ACCENT, strokeWidth=2.5, point=alt.OverlayMarkDef(color=ACCENT, size=45)).encode(
+        x=alt.X("month:T", title="Month"), y=alt.Y("skill:Q", title="Skill (s + club)"),
+        tooltip=[alt.Tooltip("month:T", title="Month"), alt.Tooltip("skill:Q", format="+.2f"),
+                 alt.Tooltip("ryc:Q", title="RYC+ bouts")] if "ryc" in traj.columns else [])
+    return alt.layer(*layers, line).properties(height=360)
 
 
 def placement_over_time(events_df: pd.DataFrame) -> alt.Chart | None:
