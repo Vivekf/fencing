@@ -27,6 +27,7 @@ N_SIMS = 10000   # event Monte-Carlo runs — high, for smooth finish histograms
 LEVEL_ORDER = {"Y8": 0, "Y10": 1, "Y12": 2, "Y14": 3, "Cadet": 4, "Junior": 5, "Senior": 6, "Vet": 7}
 MIN_COHORT_BOUTS = 20   # below this a fencer is too sparsely rated to rank in a cohort
 MIN_RYC = 10            # need this many serious (RYC+) bouts to score vs the experience curve
+SCATTER_MIN_RYC = 25    # only plot fencers with a reasonable serious-bout sample
 
 
 @st.cache_resource(show_spinner="Fitting rating model…")
@@ -144,8 +145,8 @@ def experience_context(fencer_id: int) -> dict | None:
 
 @st.cache_data(show_spinner=False)
 def experience_scatter(focal_id: int) -> dict | None:
-    """Chart data: cohort points (focal's gender, >= MIN_RYC), the fitted log curve + ±1σ
-    band, and the focal point."""
+    """Chart data: each cohort fencer (focal's gender, >= MIN_RYC) as (skill, residual-σ),
+    where residual = (skill − experience-expected) / σ. Plus the focal point."""
     sk = recent_skill_map()
     if focal_id not in sk:
         return None
@@ -153,18 +154,16 @@ def experience_scatter(focal_id: int) -> dict | None:
     fg = gender.get(focal_id)
     band = experience_band().get(fg)
     ryc = _ryc_counts()
-    if band is None:
+    if band is None or ryc.get(focal_id, 0) < MIN_RYC:
         return None
+
+    def z(f):
+        return (sk[f] - (band["b0"] + band["b1"] * np.log1p(ryc[f]))) / band["sigma"]
+
     fs = [f for f in sk if gender.get(f) == fg and cnt.get(f, 0) >= MIN_COHORT_BOUTS
-          and ryc.get(f, 0) >= MIN_RYC]
-    pts = pd.DataFrame({"ryc": [ryc[f] for f in fs], "skill": [sk[f] for f in fs]})
-    xmax = max(int(np.percentile(pts["ryc"], 98)), MIN_RYC + 1)
-    xs = np.arange(MIN_RYC, xmax + 1)
-    exp = band["b0"] + band["b1"] * np.log1p(xs)
-    line = pd.DataFrame({"ryc": xs, "expected": exp,
-                         "lo": exp - band["sigma"], "hi": exp + band["sigma"]})
-    return {"points": pts, "line": line,
-            "focal": {"ryc": ryc.get(focal_id, 0), "skill": sk[focal_id]}}
+          and ryc.get(f, 0) >= SCATTER_MIN_RYC]
+    pts = pd.DataFrame({"skill": [sk[f] for f in fs], "z": [z(f) for f in fs]})
+    return {"points": pts, "focal": {"skill": sk[focal_id], "z": z(focal_id)}}
 
 
 def skill_percentile(skill: float | None, skills: np.ndarray) -> float | None:

@@ -166,24 +166,24 @@ def placement_density_quintiles(samples, n_field: int, fencer_name: str) -> alt.
     )
 
 
-def experience_band(data: dict, focal_name: str) -> alt.Chart | None:
-    """Skill vs. cumulative serious (RYC+) experience: cohort points, fitted log curve +
-    ±1σ band, focal fencer highlighted in red."""
+def experience_scatter(data: dict, focal_name: str) -> alt.Chart | None:
+    """Scatter of skill (y) vs. residual σ from the experience-expected skill (x). Points
+    right of 0 over-perform their serious-competition volume; focal in red."""
     if not data or data["points"].empty:
         return None
-    pts, line, foc = data["points"], data["line"], data["focal"]
-    xax = alt.X("ryc:Q", title="Cumulative serious (RYC+) bouts (log scale)",
-                scale=alt.Scale(type="log"))
-    tip = [alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")]
-    band = alt.Chart(line).mark_area(opacity=0.18, color="#6b7280").encode(x=xax, y="lo:Q", y2="hi:Q")
-    fit = alt.Chart(line).mark_line(color="#111827", strokeWidth=2.5).encode(
-        x=xax, y=alt.Y("expected:Q", title="Skill (s + club)"))
-    scat = alt.Chart(pts).mark_circle(size=24, opacity=0.30, color=ACCENT).encode(x=xax, y="skill:Q", tooltip=tip)
+    pts, foc = data["points"], data["focal"]
+    tip = [alt.Tooltip("z:Q", title="σ vs expected", format="+.2f"),
+           alt.Tooltip("skill:Q", title="Skill", format="+.2f")]
+    xax = alt.X("z:Q", title="σ above / below experience-expected skill (talent)")
+    yax = alt.Y("skill:Q", title="Skill (s + club)")
+    rule = alt.Chart(pd.DataFrame({"z": [0]})).mark_rule(
+        color="#6b7280", strokeDash=[4, 4]).encode(x="z:Q")
+    scat = alt.Chart(pts).mark_circle(size=30, opacity=0.35, color=ACCENT).encode(x=xax, y=yax, tooltip=tip)
     fp = alt.Chart(pd.DataFrame([foc])).mark_point(
         size=240, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(
-        x=xax, y="skill:Q", tooltip=tip)
-    return (band + scat + fit + fp).properties(
-        height=320, title=f"{focal_name} — skill vs. serious experience")
+        x=xax, y=yax, tooltip=tip)
+    return (rule + scat + fp).properties(
+        height=340, title=f"{focal_name} — skill vs. talent (over-performance of experience)")
 
 
 def skill_trajectory(traj: pd.DataFrame) -> alt.Chart | None:

@@ -124,8 +124,8 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
     ctx = ab.experience_context(focal_id)
     esc = ab.experience_scatter(focal_id)
     if ctx and esc:
-        st.markdown("##### Skill vs. serious (RYC+) experience")
-        show_chart(charts.experience_band(esc, focal_name))
+        st.markdown("##### Skill vs. talent (over-performance of serious experience)")
+        show_chart(charts.experience_scatter(esc, focal_name))
         where = "above" if ctx["z"] >= 0 else "below"
         st.caption(
             f"Her skill is **{ctx['z']:+.2f}σ {where}** the curve expected for her "
