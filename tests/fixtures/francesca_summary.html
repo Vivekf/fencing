@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Statistics and analytics for the sport of fencing" />
+    <meta name="keywords"
+        content="fencing club rankings, best fencing clubs, fencing tournament results, fencing statistics" />
+
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous" />
+    <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"
+        integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa" crossorigin="anonymous"></script>
+    <!--  Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Overpass&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@100;400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css" />
+    <link rel="stylesheet" href="/styles.min.css" />
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/icons/favicon.ico?v=20260430" />
+    <link rel="icon" href="/icons/favicon.ico?v=20260430" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png?v=20260430" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png?v=20260430" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=20260430" />
+    <link rel="manifest" href="/icons/site.webmanifest?v=20260430" />
+
+    <!-- JavaScript -->
+    <script src="/js/colors.min.js"></script>
+    <script defer src="/js/search.min.js"></script>
+    <script defer src="/js/ranking-table.min.js"></script>
+    <script defer src="/js/event-results.min.js"></script>
+    
+
+    <!-- Disable the BOSF modal for now
+    <script src="/js/popup/config.min.js"></script>
+    <script src="/js/popup/index.min.js"></script>
+    -->
+
+    
+    <title>Fencing Tracker</title>
+    
+
+    
+    
+
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-PZQMLKK');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4785171480479202"
+        crossorigin="anonymous"></script>
+    <!-- End Google AdSense -->
+
+    <!-- Google Ad Manager -->
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+<script>
+    window.googletag = window.googletag || { cmd: [] };
+    googletag.cmd.push(function () {
+        var bannerSizes = googletag.sizeMapping()
+            .addSize([1000, 768], [970, 90])
+            .addSize([728, 300], [728, 90])
+            .addSize([0, 0], [320, 50])
+            .build();
+
+        // Define the leaderboard slot with size mapping
+        var adSlot1 = googletag.defineSlot('/23166107112/fencingtracker_leaderboard', [[970, 90], [728, 90], [320, 50]], 'fencingtracker_leaderboard')
+            .addService(googletag.pubads());
+        adSlot1.defineSizeMapping(bannerSizes);
+
+        // Define the sticky banner with size mapping
+        var stickyBanner = googletag.defineOutOfPageSlot('/23166107112/fencingtracker_stickybanner', googletag.enums.OutOfPageFormat.BOTTOM_ANCHOR)
+            .addService(googletag.pubads())
+            .setTargeting("pos", "anchor");
+        stickyBanner.defineSizeMapping(bannerSizes);
+
+        googletag.pubads().enableSingleRequest();
+        googletag.pubads().collapseEmptyDivs();
+        googletag.enableServices();
+    });
+</script>
+    <!-- End Google Ad Manager -->
+
+</head>
+
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PZQMLKK" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    
+
+    
+    <nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary site-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="/images/fencingtracker.svg" alt="Fencing Tracker" width="30" height="30"/>
+            </a>
+            <button class="navbar-toggler site-navbar__toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="site-navbar__toggler-icon" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="/largestclubs">Largest Clubs</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle site-navbar__toggle site-navbar__section-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">Top Clubs</a>
+                        <ul class="dropdown-menu site-navbar__menu site-navbar__menu--panel">
+                            <li><a class="dropdown-item rounded-2" href="/topclubs/epee">Epee</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/topclubs/foil">Foil</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/topclubs/saber">Saber</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle site-navbar__toggle site-navbar__section-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">National Circuit</a>
+                        <ul class="dropdown-menu site-navbar__menu site-navbar__menu--panel">
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1me">Men's
+                                    Epee</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1mf">Men's
+                                    Foil</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1ms">Men's
+                                    Saber</a></li>
+                            <li>
+                                <hr class="dropdown-divider" />
+                            </li>
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1we">Women's
+                                    Epee</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1wf">Women's
+                                    Foil</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/np/ranking/dv1ws">Women's
+                                    Saber</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle site-navbar__toggle site-navbar__section-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">Recruiting</a>
+                        <ul class="dropdown-menu site-navbar__menu site-navbar__menu--panel">
+                            <li><a class="dropdown-item rounded-2" href="/strength/ME/D">Men's
+                                    Epee</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/strength/MF/D">Men's
+                                    Foil</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/strength/MS/D">Men's
+                                    Saber</a></li>
+                            <li>
+                                <hr class="dropdown-divider" />
+                            </li>
+                            <li><a class="dropdown-item rounded-2" href="/strength/WE/D">Women's
+                                    Epee</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/strength/WF/D">Women's
+                                    Foil</a></li>
+                            <li><a class="dropdown-item rounded-2" href="/strength/WS/D">Women's
+                                    Saber</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="d-flex site-navbar__search" role="search" id="searchContainer">
+                    <div class="site-navbar__search-shell">
+                        <div class="dropdown site-navbar__search-dropdown">
+                            <input class="form-control site-navbar__search-input" name="s" type="search" placeholder="Search fencers..."
+                                aria-label="Search" id="searchTextbox"/>
+                            <ul class="dropdown-menu site-navbar__menu site-navbar__menu--search" id="searchDropdown"></ul>
+                        </div>
+
+                        <button class="btn site-navbar__search-button" type="button" onclick="goToSearch()" aria-label="Search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <ul class="navbar-nav site-navbar__actions ms-lg-3">
+                    <li class="nav-item dropdown site-navbar__action">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="display: none; width: 16px;">
+                            <symbol id="circle-half" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"></path>
+                            </symbol>
+                            <symbol id="moon-stars-fill" viewBox="0 0 16 16">
+                                <path
+                                    d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z">
+                                </path>
+                                <path
+                                    d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z">
+                                </path>
+                            </symbol>
+                            <symbol id="sun-fill" viewBox="0 0 16 16">
+                                <path
+                                    d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z">
+                                </path>
+                            </symbol>
+                            <symbol id="check2" viewBox="0 0 16 16">
+                                <path
+                                    d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                            </symbol>
+                        </svg>
+                        <button
+                            class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center site-navbar__toggle site-navbar__toggle--icon"
+                            id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown"
+                            data-bs-display="static" aria-label="Toggle theme (auto)">
+                            <svg class="bi theme-icon-active site-navbar__toggle-icon">
+                                <use href="#circle-half"></use>
+                            </svg>
+                            <span class="d-lg-none site-navbar__toggle-label" id="bd-theme-text">Toggle theme</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end site-navbar__menu site-navbar__menu--end" aria-labelledby="bd-theme-text">
+                            <li>
+                                <button type="button" class="dropdown-item rounded-2 d-flex align-items-center"
+                                    data-bs-theme-value="light" aria-pressed="false">
+                                    <svg class="bi me-2 opacity-50 theme-icon">
+                                        <use href="#sun-fill"></use>
+                                    </svg>
+                                    Light
+                                    <svg class="bi ms-auto d-none">
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item rounded-2 d-flex align-items-center"
+                                    data-bs-theme-value="dark" aria-pressed="false">
+                                    <svg class="bi me-2 opacity-50 theme-icon">
+                                        <use href="#moon-stars-fill"></use>
+                                    </svg>
+                                    Dark
+                                    <svg class="bi ms-auto d-none">
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item rounded-2 d-flex align-items-center active"
+                                    data-bs-theme-value="auto" aria-pressed="true">
+                                    <svg class="bi me-2 opacity-50 theme-icon">
+                                        <use href="#circle-half"></use>
+                                    </svg>
+                                    Auto
+                                    <svg class="bi ms-auto d-none">
+                                        <use href="#check2"></use>
+                                    </svg>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+
+                    
+
+                    
+                    <li class="nav-item dropdown site-navbar__action">
+                        <button
+                            class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center site-navbar__toggle site-navbar__toggle--icon site-navbar__profile-toggle"
+                            id="account-menu" type="button" aria-expanded="false" data-bs-toggle="dropdown"
+                            data-bs-display="static" aria-label="Open account menu">
+                            <span class="site-navbar__profile-icon" aria-hidden="true">
+                                <i class="bi bi-person-circle"></i>
+                            </span>
+                            <span class="d-lg-none site-navbar__toggle-label site-navbar__profile-label" id="account-menu-text">Account</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end site-navbar__menu site-navbar__menu--end" aria-labelledby="account-menu-text">
+                            <li><a class="dropdown-item rounded-2" href="/login?next=/p/100835605/Francesca-Farias">Log in</a></li>
+                            <li>
+                                <hr class="dropdown-divider" />
+                            </li>
+                            <li><a class="dropdown-item rounded-2" href="/signup?next=/p/100835605/Francesca-Farias">Sign up</a></li>
+                        </ul>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    
+    <div class="container mt-3 m-auto">
+        
+
+
+
+
+
+    </div>
+    
+
+    <div class="site-ad-leaderboard-row" aria-label="Advertisement">
+        <!-- /23166107112/fencingtracker_leaderboard -->
+<div id="fencingtracker_leaderboard" class="site-ad-leaderboard-slot"></div>
+<script>
+    googletag.cmd.push(function () { googletag.display('fencingtracker_leaderboard'); });
+</script>
+    </div>
+
+    <div class="container m-auto">
+
+    
+
+        
+
+
+        
+        
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                if (typeof bootstrap === "undefined" || !bootstrap.Tooltip) {
+                    return;
+                }
+
+                bootstrap.Tooltip.getOrCreateInstance(document.body, {
+                    container: "body",
+                    selector: '[data-bs-toggle="tooltip"]'
+                });
+            });
+        </script>
+
+        
+
+        
+<div class="ranking-page person-page">
+    <section class="club-shell person-shell">
+        <div class="club-shell__header person-shell__header">
+            <section class="ranking-hero person-hero">
+                <p class="ranking-eyebrow">Statistics Profile</p>
+                <div class="person-hero__headline">
+                    <div class="person-hero__identity">
+                        <h1>Francesca Farias</h1>
+                        
+                        <span class="flag-icon flag-icon-us rounded person-hero__flag"
+                            title="USA"></span>
+                        
+                        
+                        
+                    </div>
+                    
+                    <div class="person-hero__birth-year">2016</div>
+                    
+                </div>
+
+                
+                <div class="person-hero__clubs">
+                    
+                    <a class="person-hero__club-link"
+                        href="/club/100025378/OlympiaFC/ratings">Olympia Fencing Center</a>
+                    
+                    
+                </div>
+                
+
+                
+                <div class="person-claim-callout">
+                    <span class="person-claim-callout__icon" aria-hidden="true">
+                        <i class="bi bi-person-plus"></i>
+                    </span>
+                    <div class="person-claim-callout__copy">
+                        <strong>Is this your profile?</strong>
+                        <span>Register with your USFA ID to claim it.</span>
+                    </div>
+                    <a class="club-page__action-link club-page__action-link--primary person-claim-callout__action"
+                        href="/signup?usfaNumber=100835605&next=/p/100835605/Francesca-Farias">
+                        <span>Claim profile</span>
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+                
+            </section>
+
+            
+
+            <nav class="nav nav-pills ranking-pills ranking-tabs--dense club-page__nav person-page__nav">
+                
+                <a class="nav-link active"
+                    aria-current="page"
+                    href="/p/100835605/Francesca-Farias">Summary</a>
+                
+                <a class="nav-link"
+                    
+                    href="/p/100835605/Francesca-Farias/history">History</a>
+                
+                <a class="nav-link"
+                    
+                    href="/p/100835605/Francesca-Farias/strength">Strength</a>
+                
+            </nav>
+        </div>
+
+        <div class="club-shell__body person-shell__body">
+            
+
+<section class="ranking-panel">
+    <div class="ranking-panel__header">
+        <div class="ranking-panel__title-group">
+            <h2>Registrations</h2>
+        </div>
+        
+    </div>
+
+    <div class="table-responsive ranking-table-wrap">
+        <table class="table table-striped ranking-table ranking-table--compact align-middle mb-0" data-ranking-table>
+            <thead>
+                <tr>
+                    <th class="ranking-table__numeric">
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort data-ranking-sort-default="ascending" aria-label="Sort by date, earliest first">
+                            <span>Date</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by tournament name">
+                            <span>Tournament</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by event name">
+                            <span>Event</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr data-ranking-search="Summer Nationals and July Challenge Youth 10 Women’s Epee (Y10WE)">
+                    <td class="ranking-table__numeric" data-ranking-value="20260705">
+                        Jul 5
+                    </td>
+                    <td>Summer Nationals and July Challenge</td>
+                    <td><a href="/event/18164">Youth 10 Women’s Epee (Y10WE)</a></td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
+</section>
+
+
+
+<div class="person-summary__grid">
+    
+    <section class="ranking-panel person-summary__metric-panel person-summary__rating-panel">
+        <div class="ranking-panel__header">
+            <div class="ranking-panel__title-group">
+                <h2>Rating history</h2>
+            </div>
+            
+        </div>
+
+        <div class="table-responsive ranking-table-wrap">
+            <table class="table table-striped ranking-table ranking-table--compact align-middle mb-0" data-ranking-table>
+                <thead>
+                    <tr>
+                        <th>Weapon</th>
+                        <th>Rating</th>
+                        <th class="ranking-table__numeric">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr data-ranking-search="ratingFoil U Aug 3, 2024">
+                        <td data-ranking-text="Foil">Foil</td>
+                        <td data-ranking-text="U">U</td>
+                        <td class="ranking-table__numeric" data-ranking-value="20240803">Aug 3, 2024</td>
+                    </tr>
+                    
+                    <tr data-ranking-search="ratingEpee U Aug 3, 2024">
+                        <td data-ranking-text="Epee">Epee</td>
+                        <td data-ranking-text="U">U</td>
+                        <td class="ranking-table__numeric" data-ranking-value="20240803">Aug 3, 2024</td>
+                    </tr>
+                    
+                    <tr data-ranking-search="ratingSaber U Aug 3, 2024">
+                        <td data-ranking-text="Saber">Saber</td>
+                        <td data-ranking-text="U">U</td>
+                        <td class="ranking-table__numeric" data-ranking-value="20240803">Aug 3, 2024</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+
+    
+    <section class="ranking-panel person-summary__metric-panel person-summary__podium-panel">
+        <div class="ranking-panel__header">
+            <div class="ranking-panel__title-group">
+                <h2>Podium finishes</h2>
+            </div>
+        </div>
+
+        <div class="table-responsive ranking-table-wrap">
+            <table class="table table-striped ranking-table ranking-table--compact person-summary__podium-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Season</th>
+                        <th class="ranking-table__numeric person-summary__podium-heading">
+                            <span class="person-summary__podium-medal person-summary__podium-medal--gold" title="Gold" aria-hidden="true">
+                                <i class="bi bi-award-fill"></i>
+                            </span>
+                            <span class="visually-hidden">Gold</span>
+                        </th>
+                        <th class="ranking-table__numeric person-summary__podium-heading">
+                            <span class="person-summary__podium-medal person-summary__podium-medal--silver" title="Silver" aria-hidden="true">
+                                <i class="bi bi-award-fill"></i>
+                            </span>
+                            <span class="visually-hidden">Silver</span>
+                        </th>
+                        <th class="ranking-table__numeric person-summary__podium-heading">
+                            <span class="person-summary__podium-medal person-summary__podium-medal--bronze" title="Bronze" aria-hidden="true">
+                                <i class="bi bi-award-fill"></i>
+                            </span>
+                            <span class="visually-hidden">Bronze</span>
+                        </th>
+                        <th class="ranking-table__numeric">T8</th>
+                        <th class="ranking-table__numeric">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    
+                    <tr class="">
+                        <th scope="row" class="person-summary__season">2025-2026</th>
+                        <td class="ranking-table__numeric">3</td>
+                        <td class="ranking-table__numeric">2</td>
+                        <td class="ranking-table__numeric">3</td>
+                        <td class="ranking-table__numeric">4</td>
+                        <td class="ranking-table__numeric">12</td>
+                    </tr>
+                    
+                    
+                    <tr class="">
+                        <th scope="row" class="person-summary__season">2024-2025</th>
+                        <td class="ranking-table__numeric">1</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">2</td>
+                        <td class="ranking-table__numeric">3</td>
+                        <td class="ranking-table__numeric">6</td>
+                    </tr>
+                    
+                    
+                    <tr class="">
+                        <th scope="row" class="person-summary__season">2023-2024</th>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                    </tr>
+                    
+                    
+                    <tr class="">
+                        <th scope="row" class="person-summary__season">2022-2023</th>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                    </tr>
+                    
+                    
+                    <tr class="">
+                        <th scope="row" class="person-summary__season">Before 2022</th>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                        <td class="ranking-table__numeric">-</td>
+                    </tr>
+                    
+                    
+                    <tr class="person-summary__season-row--total">
+                        <th scope="row" class="person-summary__season">All time</th>
+                        <td class="ranking-table__numeric">4</td>
+                        <td class="ranking-table__numeric">2</td>
+                        <td class="ranking-table__numeric">5</td>
+                        <td class="ranking-table__numeric">7</td>
+                        <td class="ranking-table__numeric">18</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+</div>
+
+
+
+<div class="person-summary__results-divider" aria-hidden="true"></div>
+<section class="ranking-panel person-summary__results-panel">
+    <div class="ranking-panel__header">
+        <div class="ranking-panel__title-group">
+            <h2>Results</h2>
+        </div>
+        
+        <div class="ranking-panel__tools">
+            <label class="ranking-table-search" for="person-results-search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="person-results-search" type="search" placeholder="Find a result" autocomplete="off" data-ranking-table-search />
+            </label>
+        </div>
+        
+    </div>
+
+    <div class="table-responsive ranking-table-wrap">
+        <table class="table table-striped table-hover ranking-table person-summary__results-table align-middle mb-0" data-ranking-table>
+            <thead>
+                <tr>
+                    <th class="ranking-table__numeric">
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort data-ranking-sort-default="descending" aria-label="Sort by date, newest first">
+                            <span>Date</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by tournament name">
+                            <span>Tournament</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th class="person-summary__event-col">
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by event name">
+                            <span>Event</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th class="ranking-table__numeric">
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort data-ranking-sort-default="ascending" aria-label="Sort by place, best finish first">
+                            <span>Place</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by rating earned">
+                            <span>Rating Earned</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="ranking-table__sort-button" data-ranking-sort="text" aria-label="Sort by event class">
+                            <span>Event Class</span>
+                            <i class="bi bi-arrow-down-up" aria-hidden="true"></i>
+                        </button>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 5B (Y10/Y14 Epee) Unrated Y-14 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260517">
+                        May 17
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 5B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/41045/results" title="Unrated Y-14 Women's Épée">Unrated Y-14 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="6">
+                        6 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 5A (Y8/Y12 Epee) Unrated Y-12 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260503">
+                        May 3
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 5A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/40717/results" title="Unrated Y-12 Women's Épée">Unrated Y-12 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="1">
+                        1 / 7
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="American Challenge RJCC/RYC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260417">
+                        Apr 17
+                    </td>
+                    <td>American Challenge RJCC/RYC</td>
+                    <td class="person-summary__event-cell"><a href="/event/39974/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="16">
+                        16 / 23
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 4B (Y10/Y14 Epee) Unrated Y-14 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260412">
+                        Apr 12
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 4B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/39934/results" title="Unrated Y-14 Women's Épée">Unrated Y-14 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="11">
+                        11 / 14
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Neil Lazar RYC/RJCC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260404">
+                        Apr 4
+                    </td>
+                    <td>Neil Lazar RYC/RJCC</td>
+                    <td class="person-summary__event-cell"><a href="/event/39522/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="23">
+                        23 / 29
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 4A (Y8/Y12 Epee) Unrated Y-12 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260322">
+                        Mar 22
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 4A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/39207/results" title="Unrated Y-12 Women's Épée">Unrated Y-12 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="3">
+                        3 / 12
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Miles Chamley-Watson Cup RYC/RJCC/ROC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260321">
+                        Mar 21
+                    </td>
+                    <td>Miles Chamley-Watson Cup RYC/RJCC/ROC</td>
+                    <td class="person-summary__event-cell"><a href="/event/38987/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="10">
+                        10 / 28
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="March 14th 2026 Vivo/Marx Fencing Youth Epee Developmental @Vivo Unrated Y-10 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260314">
+                        Mar 14
+                    </td>
+                    <td>March 14th 2026 Vivo/Marx Fencing Youth Epee Developmental @Vivo</td>
+                    <td class="person-summary__event-cell"><a href="/event/38704/results" title="Unrated Y-10 Mixed Épée">Unrated Y-10 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="1">
+                        1 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="March NAC Y-10 Women's Épée D1 ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260309">
+                        Mar 9
+                    </td>
+                    <td>March NAC</td>
+                    <td class="person-summary__event-cell"><a href="/event/38676/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="50">
+                        50 / 63
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="D1">D1</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 3A (Y8/Y12 Epee) Unrated Y-12 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260301">
+                        Mar 1
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 3A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/38504/results" title="Unrated Y-12 Women's Épée">Unrated Y-12 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="3">
+                        3 / 11
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Mission RYC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260221">
+                        Feb 21
+                    </td>
+                    <td>Mission RYC</td>
+                    <td class="person-summary__event-cell"><a href="/event/38140/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="12">
+                        12 / 22
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Marx/Vivo Developmental Epee Unrated Y-12 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260207">
+                        Feb 7
+                    </td>
+                    <td>Marx/Vivo Developmental Epee</td>
+                    <td class="person-summary__event-cell"><a href="/event/37829/results" title="Unrated Y-12 Mixed Épée">Unrated Y-12 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="15">
+                        15 / 16
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Marx/Vivo Developmental Epee Unrated Y-10 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260207">
+                        Feb 7
+                    </td>
+                    <td>Marx/Vivo Developmental Epee</td>
+                    <td class="person-summary__event-cell"><a href="/event/37828/results" title="Unrated Y-10 Mixed Épée">Unrated Y-10 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 10
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 3B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260201">
+                        Feb 1
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 3B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/37715/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="1">
+                        1 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Boston Fencing Club RYC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20260103">
+                        Jan 3
+                    </td>
+                    <td>Boston Fencing Club RYC</td>
+                    <td class="person-summary__event-cell"><a href="/event/37023/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="3">
+                        3 / 21
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Boston Fencing Club RYC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251213">
+                        Dec 13
+                    </td>
+                    <td>Boston Fencing Club RYC</td>
+                    <td class="person-summary__event-cell"><a href="/event/36482/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="19">
+                        19 / 25
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 2B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251207">
+                        Dec 7
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 2B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/36392/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="2">
+                        2 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Morris Cup RYC/RJCC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251122">
+                        Nov 22
+                    </td>
+                    <td>Morris Cup RYC/RJCC</td>
+                    <td class="person-summary__event-cell"><a href="/event/35980/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="9">
+                        9 / 34
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 2A (Y8/Y12 Epee) Unrated Y-12 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251109">
+                        Nov 9
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 2A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/35718/results" title="Unrated Y-12 Women's Épée">Unrated Y-12 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 10
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 1B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251019">
+                        Oct 19
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 1B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/34903/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="2">
+                        2 / 8
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Ben Gutenberg Memorial SYC - RJCC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20251018">
+                        Oct 18
+                    </td>
+                    <td>Ben Gutenberg Memorial SYC - RJCC</td>
+                    <td class="person-summary__event-cell"><a href="/event/34845/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="18">
+                        18 / 24
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Premier Challenge ROC/RJCC/RYC Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250926">
+                        Sep 26
+                    </td>
+                    <td>Premier Challenge ROC/RJCC/RYC</td>
+                    <td class="person-summary__event-cell"><a href="/event/34264/results" title="Y-10 Women's Épée">Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="14">
+                        14 / 17
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 1A (Y8/Y12 Epee) Unrated Y-12 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250914">
+                        Sep 14
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 1A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/33923/results" title="Unrated Y-12 Women's Épée">Unrated Y-12 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 8
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 5A (Y8/Y12 Epee) Unrated Y-8 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250622">
+                        Jun 22, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 5A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/33110/results" title="Unrated Y-8 Mixed Épée">Unrated Y-8 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 4B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250518">
+                        May 18, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 4B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/32520/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="3">
+                        3 / 7
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 4A (Y8/Y12 Epee) Unrated Y-8 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250406">
+                        Apr 6, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 4A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/31438/results" title="Unrated Y-8 Mixed Épée">Unrated Y-8 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="3">
+                        3 / 5
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 3B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250316">
+                        Mar 16, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 3B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/30764/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 9
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 3A (Y8/Y12 Epee) Unrated Y-8 Mixed Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250202">
+                        Feb 2, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 3A (Y8/Y12 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/29559/results" title="Unrated Y-8 Mixed Épée">Unrated Y-8 Mixed Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="1">
+                        1 / 4
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+                <tr data-ranking-search="Olympia D'Artagnan's Challenge 2B (Y10/Y14 Epee) Unrated Y-10 Women's Épée U ">
+                    <td class="ranking-table__numeric" data-ranking-value="20250112">
+                        Jan 12, '25
+                    </td>
+                    <td>Olympia D'Artagnan's Challenge 2B (Y10/Y14 Epee)</td>
+                    <td class="person-summary__event-cell"><a href="/event/29168/results" title="Unrated Y-10 Women's Épée">Unrated Y-10 Women's Épée</a></td>
+                    <td class="ranking-table__numeric" data-ranking-value="5">
+                        5 / 7
+                    </td>
+                    <td data-ranking-text=""></td>
+                    <td data-ranking-text="U">U</td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
+</section>
+
+
+        </div>
+    </section>
+</div>
+
+    </div>
+
+
+    <div class="container">
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+            <p class="col-md-4 mb-0 text-muted">© 2020-2026 FencingTracker</p>
+
+            <ul class="nav col-md-4 justify-content-end">
+                <li class="nav-item"><a href="/privacy" class="nav-link px-2 text-muted">Privacy Policy</a></li>
+                <li class="nav-item"><a href="/contact" class="nav-link px-2 text-muted">Contact</a></li>
+                <li class="nav-item"><a href="/faq" class="nav-link px-2 text-muted">FAQs</a></li>
+                <li class="nav-item"><a href="/about" class="nav-link px-2 text-muted">About</a></li>
+            </ul>
+        </footer>
+    </div>
+
+    
+    
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div class="toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true" id="discordToast" data-bs-autohide="false">
+        <div class="d-flex">
+            <div class="toast-body">
+                Want to keep up with all things fencingtracker? Join our Discord community <a href="/discord">here</a>.
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toast = document.getElementById('discordToast')
+
+    if (!toast || typeof bootstrap === "undefined" || !bootstrap.Toast) {
+        return
+    }
+
+    const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toast)
+
+    toast.addEventListener('hidden.bs.toast', function () {
+        localStorage.setItem('discordToast', 'hidden')
+    })
+
+    
+})
+</script>
+</body>
+</html>

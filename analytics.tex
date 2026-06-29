@@ -1,0 +1,159 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, geometry}
+\geometry{margin=1in}
+
+\title{Dynamic Low-Rank Fencing Rating Model}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Observation Model}
+
+For a bout between fencers $i$ and $j$ during month $m$, define the normalized score differential
+\[
+Z_{ijm}
+=
+\frac{\text{score}_i-\text{score}_j}{\text{target score}},
+\]
+where the target score is $5$ for pool bouts and $15$ for direct-elimination bouts.
+
+We model
+\[
+Z_{ijm}
+=
+\mu_{ijm}+\varepsilon_{ijm},
+\]
+with
+\[
+\varepsilon_{ijm}\sim \mathcal N(0,\sigma^2_{\mathrm{type}}),
+\]
+where the noise variance may differ between pool and DE bouts.
+
+\section{Latent Performance Model}
+
+The conditional mean is
+\[
+\boxed{
+\mu_{ijm}
+=
+s_{im}-s_{jm}
++
+u_i^\top v_j-u_j^\top v_i
++
+\beta_{\mathrm{age}}(a_{im}-a_{jm})
++
+c_{\ell(i)}-c_{\ell(j)}
++
+\beta_{\mathrm{DE}}\mathbf 1\{\mathrm{DE}\}.
+}
+\]
+
+Here:
+\begin{itemize}
+    \item $s_{im}$ is the latent skill of fencer $i$ in month $m$.
+    \item $u_i,v_i\in\mathbb R^k$ are stable low-dimensional matchup factors.
+    \item $u_i^\top v_j-u_j^\top v_i$ is an antisymmetric low-rank matchup effect.
+    \item $a_{im}$ is the age of fencer $i$ in month $m$.
+    \item $\ell(i)$ is the club of fencer $i$.
+    \item $c_{\ell}$ is the club effect for club $\ell$.
+    \item $\mathbf 1\{\mathrm{DE}\}$ indicates a direct-elimination bout.
+\end{itemize}
+
+\section{Dynamics}
+
+Only skill is allowed to vary month to month. The matchup factors are stable.
+
+Smoothness is imposed through
+\[
+\lambda_{\mathrm{time}}
+\sum_i\sum_m
+\left(s_{im}-s_{i,m-1}\right)^2.
+\]
+
+Thus the model allows rapid but not arbitrary month-to-month skill movement.
+
+\section{Estimation}
+
+Estimate parameters by minimizing
+\[
+\sum_b
+\left(Z_b-\mu_b\right)^2
++
+\lambda_{\mathrm{time}}
+\sum_i\sum_m
+\left(s_{im}-s_{i,m-1}\right)^2
++
+\lambda_s\sum_{i,m}s_{im}^2
+\]
+\[
++
+\lambda_u\sum_i \|u_i\|^2
++
+\lambda_v\sum_i \|v_i\|^2
++
+\lambda_c\sum_\ell c_\ell^2
++
+\lambda_\beta \|\beta\|^2.
+\]
+
+Equivalently, if using bout-type-specific variances, minimize
+\[
+\sum_b
+\frac{
+\left(Z_b-\mu_b\right)^2
+}{
+2\sigma_{\mathrm{type}(b)}^2
+}
++
+\text{regularization terms}.
+\]
+
+\section{Identifiability}
+
+Because skill is relative, impose
+\[
+\sum_i s_{im}=0
+\qquad \forall m.
+\]
+
+Because club effects are also relative, impose
+\[
+\sum_\ell c_\ell=0.
+\]
+
+The low-rank factors $u_i,v_i$ are not individually identifiable up to rotations and transformations, but the induced matchup residual
+\[
+r_{ij}=u_i^\top v_j-u_j^\top v_i
+\]
+is the object of interest.
+
+\section{Interpretation}
+
+The model decomposes observed performance into three parts:
+\[
+\text{score differential}
+=
+\text{dynamic skill difference}
++
+\text{stable matchup effect}
++
+\text{covariate effects}
++
+\text{noise}.
+\]
+
+The central modeling choice is that
+\[
+s_{im}
+\]
+evolves by month, while the non-transitive matchup structure
+\[
+u_i^\top v_j-u_j^\top v_i
+\]
+is stable over time.
+
+This keeps the model flexible enough to capture stylistic non-transitivities, but not so flexible that each fencer's style must be relearned every month.
+
+\end{document}

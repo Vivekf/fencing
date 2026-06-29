@@ -1,0 +1,11 @@
+# Scraper (Phases A-C)
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+tenacity>=8.2
+tqdm>=4.66
+
+# Explorer (Phase D)
+streamlit>=1.40
+altair>=5.4
+pandas>=2.2
