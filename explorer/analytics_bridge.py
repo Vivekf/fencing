@@ -23,6 +23,7 @@ SINCE, BIRTH_MIN, BIRTH_MAX = "2022-09", 2013, 2018
 YOUTH_DE10 = {"Y8", "Y10"}
 N_SIMS = 10000   # event Monte-Carlo runs — high, for smooth finish histograms
 LEVEL_ORDER = {"Y8": 0, "Y10": 1, "Y12": 2, "Y14": 3, "Cadet": 4, "Junior": 5, "Senior": 6, "Vet": 7}
+MIN_COHORT_BOUTS = 20   # below this a fencer is too sparsely rated to rank in a cohort
 
 
 @st.cache_resource(show_spinner="Fitting rating model…")
@@ -131,19 +132,40 @@ def skill_trajectory(focal_id: int) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
+def _fencer_meta():
+    """(epee-bout-count, gender) per modelled fencer — for cohort gender/min-bouts filters."""
+    ds, _ = fit()
+    from collections import Counter
+    cnt = Counter()
+    for f in ds.bouts.fencer_a_id.to_numpy():
+        cnt[int(f)] += 1
+    for f in ds.bouts.fencer_b_id.to_numpy():
+        cnt[int(f)] += 1
+    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    gender = {r[0]: r[1] for r in conn.execute("SELECT id, gender FROM fencers")}
+    return dict(cnt), gender
+
+
+@st.cache_data(show_spinner=False)
 def birth_year_rank(focal_id: int) -> dict | None:
-    """Focal's club-adjusted-ability rank among all rated fencers born in her exact birth
-    year (her true same-age peers — no age confound)."""
+    """Focal's club-adjusted-ability rank among her TRUE same-age peers: rated fencers born
+    in her exact birth year, of her gender, with enough bouts to be reliably rated."""
     conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
     by = {r[0]: r[1] for r in conn.execute("SELECT id, birth_year FROM fencers")}
     yr = by.get(focal_id)
     sk = recent_skill_map()
     if not yr or focal_id not in sk:
         return None
-    cohort = {f: v for f, v in sk.items() if by.get(f) == yr}
+    cnt, gender = _fencer_meta()
+    fg = gender.get(focal_id)
+    cohort = {f: v for f, v in sk.items()
+              if by.get(f) == yr and cnt.get(f, 0) >= MIN_COHORT_BOUTS
+              and (fg is None or gender.get(f) == fg)}
+    if focal_id not in cohort:
+        return None
     fs = cohort[focal_id]
     vals = np.fromiter(cohort.values(), float)
-    return {"year": int(yr), "n": len(cohort), "rank": int((vals > fs).sum()) + 1,
+    return {"year": int(yr), "gender": fg, "n": len(cohort), "rank": int((vals > fs).sum()) + 1,
             "pct": float((vals < fs).mean() * 100.0), "skill": fs}
 
 
@@ -168,7 +190,11 @@ def eligibility_cohort_rank(focal_id: int) -> dict | None:
         return None
     floor = min(floors)
     sk = recent_skill_map()
-    cohort = {f: s for f, s in sk.items() if (by.get(f) or 0) >= floor}
+    cnt, gender = _fencer_meta()
+    fg = gender.get(focal_id)
+    cohort = {f: s for f, s in sk.items()
+              if (by.get(f) or 0) >= floor and cnt.get(f, 0) >= MIN_COHORT_BOUTS
+              and (fg is None or gender.get(f) == fg)}
     if focal_id not in cohort:
         return None
     fs = cohort[focal_id]

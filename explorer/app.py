@@ -107,8 +107,10 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
         c[0].metric("Estimated ability", f"{byr['skill']:+.2f}")
         c[1].metric(f"Rank among born-{byr['year']}", f"#{byr['rank']} / {byr['n']}")
         c[2].metric("Percentile (birth year)", f"{byr['pct']:.0f}%")
-        cap = (f"Club-adjusted ability (skill + club effect, age-agnostic) vs. all rated "
-               f"fencers **born {byr['year']}** (her exact birth year).")
+        gl = {"W": "women", "M": "men"}.get(byr.get("gender"), "")
+        cap = (f"Club-adjusted ability (skill + club effect, age-agnostic) vs. rated "
+               f"**{gl} épée fencers born {byr['year']}** with ≥{ab.MIN_COHORT_BOUTS} bouts "
+               f"(her true same-age peers).")
         if cohort:
             cap += (f"  For reference, among everyone eligible for **{cohort['level']}** "
                     f"(born {cohort['floor']}+): #{cohort['rank']} / {cohort['n']} "
