@@ -172,17 +172,16 @@ def experience_band(data: dict, focal_name: str) -> alt.Chart | None:
     if not data or data["points"].empty:
         return None
     pts, line, foc = data["points"], data["line"], data["focal"]
-    band = alt.Chart(line).mark_area(opacity=0.18, color="#6b7280").encode(
-        x=alt.X("ryc:Q", title="Cumulative serious (RYC+) bouts"), y="lo:Q", y2="hi:Q")
+    xax = alt.X("ryc:Q", title="Cumulative serious (RYC+) bouts (log scale)",
+                scale=alt.Scale(type="log"))
+    tip = [alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")]
+    band = alt.Chart(line).mark_area(opacity=0.18, color="#6b7280").encode(x=xax, y="lo:Q", y2="hi:Q")
     fit = alt.Chart(line).mark_line(color="#111827", strokeWidth=2.5).encode(
-        x="ryc:Q", y=alt.Y("expected:Q", title="Skill (s + club)"))
-    scat = alt.Chart(pts).mark_circle(size=22, opacity=0.30, color=ACCENT).encode(
-        x="ryc:Q", y="skill:Q",
-        tooltip=[alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")])
+        x=xax, y=alt.Y("expected:Q", title="Skill (s + club), age-adjusted"))
+    scat = alt.Chart(pts).mark_circle(size=24, opacity=0.30, color=ACCENT).encode(x=xax, y="skill:Q", tooltip=tip)
     fp = alt.Chart(pd.DataFrame([foc])).mark_point(
-        size=220, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(
-        x="ryc:Q", y="skill:Q",
-        tooltip=[alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")])
+        size=240, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(
+        x=xax, y="skill:Q", tooltip=tip)
     return (band + scat + fit + fp).properties(
         height=320, title=f"{focal_name} — skill vs. serious experience")
 
