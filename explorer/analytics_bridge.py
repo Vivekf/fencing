@@ -162,8 +162,10 @@ def experience_scatter(focal_id: int) -> dict | None:
 
     fs = [f for f in sk if gender.get(f) == fg and cnt.get(f, 0) >= MIN_COHORT_BOUTS
           and ryc.get(f, 0) >= SCATTER_MIN_RYC]
-    pts = pd.DataFrame({"skill": [sk[f] for f in fs], "z": [z(f) for f in fs]})
-    return {"points": pts, "focal": {"skill": sk[focal_id], "z": z(focal_id)}}
+    pts = pd.DataFrame({"skill": [sk[f] for f in fs], "z": [z(f) for f in fs],
+                        "ryc": [ryc[f] for f in fs]})
+    return {"points": pts,
+            "focal": {"skill": sk[focal_id], "z": z(focal_id), "ryc": ryc.get(focal_id, 0)}}
 
 
 def skill_percentile(skill: float | None, skills: np.ndarray) -> float | None:

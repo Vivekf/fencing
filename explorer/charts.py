@@ -173,17 +173,21 @@ def experience_scatter(data: dict, focal_name: str) -> alt.Chart | None:
         return None
     pts, foc = data["points"], data["focal"]
     tip = [alt.Tooltip("z:Q", title="σ vs expected", format="+.2f"),
-           alt.Tooltip("skill:Q", title="Skill", format="+.2f")]
+           alt.Tooltip("skill:Q", title="Skill", format="+.2f"),
+           alt.Tooltip("ryc:Q", title="RYC+ bouts")]
     xax = alt.X("z:Q", title="σ above / below experience-expected skill (talent)")
     yax = alt.Y("skill:Q", title="Skill (s + club)")
+    color = alt.Color("ryc:Q", title="RYC+ bouts",
+                      scale=alt.Scale(type="log", scheme="viridis"),
+                      legend=alt.Legend(orient="bottom"))
     rule = alt.Chart(pd.DataFrame({"z": [0]})).mark_rule(
         color="#6b7280", strokeDash=[4, 4]).encode(x="z:Q")
-    scat = alt.Chart(pts).mark_circle(size=30, opacity=0.35, color=ACCENT).encode(x=xax, y=yax, tooltip=tip)
+    scat = alt.Chart(pts).mark_circle(size=45, opacity=0.7).encode(x=xax, y=yax, color=color, tooltip=tip)
     fp = alt.Chart(pd.DataFrame([foc])).mark_point(
-        size=240, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(
+        size=260, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=2).encode(
         x=xax, y=yax, tooltip=tip)
     return (rule + scat + fp).properties(
-        height=340, title=f"{focal_name} — skill vs. talent (over-performance of experience)")
+        height=360, width=360, title=f"{focal_name} — skill vs. talent")
 
 
 def skill_trajectory(traj: pd.DataFrame) -> alt.Chart | None:
@@ -199,7 +203,7 @@ def skill_trajectory(traj: pd.DataFrame) -> alt.Chart | None:
             tooltip=[alt.Tooltip("month:T", title="Month"),
                      alt.Tooltip("skill:Q", title="Skill", format="+.2f")],
         )
-        .properties(height=240)
+        .properties(height=360)
     )
 
 

@@ -117,15 +117,16 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
                     f"({cohort['pct']:.0f}th pct).")
         st.caption(cap)
 
-    st.markdown("##### Estimated ability over time")
-    tchart = charts.skill_trajectory(ab.skill_trajectory(focal_id))
-    show_chart(tchart)
-
     ctx = ab.experience_context(focal_id)
     esc = ab.experience_scatter(focal_id)
-    if ctx and esc:
-        st.markdown("##### Skill vs. talent (over-performance of serious experience)")
-        show_chart(charts.experience_scatter(esc, focal_name))
+    left, right = st.columns(2)
+    with left:
+        st.markdown("##### Ability over time")
+        show_chart(charts.skill_trajectory(ab.skill_trajectory(focal_id)))
+    with right:
+        st.markdown("##### Skill vs. talent")
+        show_chart(charts.experience_scatter(esc, focal_name) if esc else None)
+    if ctx:
         where = "above" if ctx["z"] >= 0 else "below"
         st.caption(
             f"Her skill is **{ctx['z']:+.2f}σ {where}** the curve expected for her "
