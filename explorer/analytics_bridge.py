@@ -35,10 +35,16 @@ def fit():
 
 @st.cache_data(show_spinner=False)
 def recent_skill_map() -> dict[int, float]:
-    """Smoothed recent skill (ability) per modelled fencer — the same quantity that
-    feeds the simulation's effective strength, so display and outcome stay consistent."""
-    _, fm = fit()
-    return FC.recent_skill(fm)
+    """Club-adjusted ability per modelled fencer: recent skill s_i + club main-effect
+    c_club_i (age-agnostic). s_i alone is only skill *relative to the club baseline*; adding
+    c_club restores cross-club comparability. The placement simulation adds the age term on
+    top (effective strength g = s + c + age)."""
+    ds, fm = fit()
+    s = FC.recent_skill(fm)
+    ca, _ = _strength_inputs()
+    C = len(fm.c)
+    return {f: sv + (float(fm.c[ci]) if 0 <= (ci := ca.get(f, -1)) < C else 0.0)
+            for f, sv in s.items()}
 
 
 @st.cache_data(show_spinner=False)
@@ -110,13 +116,16 @@ def event_placement_df(event_id: int, n_sims: int = N_SIMS) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def skill_trajectory(focal_id: int) -> pd.DataFrame:
-    """A fencer's monthly estimated skill over time (the model's s_im)."""
+    """Monthly club-adjusted ability over time (s_im + club effect, age-agnostic)."""
     ds, fm = fit()
     fidx = {f: i for i, f in enumerate(fm.fencer_ids)}
     if focal_id not in fidx:
         return pd.DataFrame()
+    ca, _ = _strength_inputs()
+    C = len(fm.c); ci = ca.get(focal_id, -1)
+    cterm = float(fm.c[ci]) if 0 <= ci < C else 0.0
     _, traj = fm._skill_lookup()
-    rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s}
+    rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s + cterm}
             for mi, s in traj.get(fidx[focal_id], [])]
     return pd.DataFrame(rows)
 

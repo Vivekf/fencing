@@ -106,10 +106,11 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
         c[0].metric("Estimated ability", f"{cohort['skill']:+.2f}")
         c[1].metric(f"Rank among {cohort['level']}-eligible", f"#{cohort['rank']} / {cohort['n']}")
         c[2].metric("Percentile in cohort", f"{cohort['pct']:.0f}%")
-        st.caption(f"Ability vs. all rated fencers eligible for **{cohort['level']}** "
-                   f"(born {cohort['floor']} or later) — her lowest competing level.")
+        st.caption(f"Club-adjusted ability (skill + club effect, age-agnostic) vs. all rated "
+                   f"fencers eligible for **{cohort['level']}** (born {cohort['floor']} or "
+                   f"later) — her lowest competing level.")
 
-    st.markdown("##### Estimated skill over time")
+    st.markdown("##### Estimated ability over time")
     tchart = charts.skill_trajectory(ab.skill_trajectory(focal_id))
     show_chart(tchart)
 
@@ -298,7 +299,8 @@ def render_opponents_tab(focal_id: int, focal_name: str,
         on_select="rerun", selection_mode="single-row",
         column_config={
             "Est. skill": st.column_config.NumberColumn(
-                format="%.2f", help="Model skill (peer-relative); blank if outside the rated cohort."),
+                format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
+                                    "blank if outside the rated cohort."),
             "Pctile": st.column_config.ProgressColumn(
                 format="%.0f", min_value=0, max_value=100, help="Skill percentile among rated peers"),
             "Upcoming": st.column_config.CheckboxColumn(help="In one of her upcoming event fields"),
@@ -398,7 +400,8 @@ def render_upcoming_tab(focal_id: int, focal_name: str) -> None:
         column_config={
             "Born": st.column_config.NumberColumn(format="%d", help="Birth year — younger = disadvantaged"),
             "Skill": st.column_config.NumberColumn(
-                format="%.2f", help="Age-agnostic ability; projected finish also factors in age"),
+                format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
+                                    "projected finish also factors in age"),
             "Exp. finish": st.column_config.NumberColumn(format="%.1f"),
         },
     )
