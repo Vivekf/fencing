@@ -8,7 +8,9 @@ All read-only; the fit uses the same tuned config as the forecast.
 
 from __future__ import annotations
 
+import re
 import sqlite3
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -72,6 +74,92 @@ def matchup_winprob(focal_id: int, opp_id: int) -> dict | None:
         "p_de": float(_norm_cdf(mu / fm.sigma_de)),
         "focal_rated": focal_id in rated, "opp_rated": opp_id in rated,
     }
+
+
+_SERIOUS_RE = re.compile(
+    r"\bNAC\b|North American Cup|Summer Nationals|\bSYC\b|Super Youth|"
+    r"\bROC\b|\bRYC\b|\bRJCC?\b|Regional", re.I)
+
+
+@st.cache_data(show_spinner=False)
+def _ryc_counts() -> dict[int, int]:
+    """Per-fencer count of 'serious' (RYC+ / regional-and-up) epee bouts."""
+    ds, _ = fit()
+    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    serious = {r[0] for r in conn.execute("SELECT id, name FROM events")
+               if r[1] and _SERIOUS_RE.search(r[1])}
+    cnt = Counter()
+    for f, e in zip(ds.bouts.fencer_a_id.to_numpy(), ds.bouts.event_id.to_numpy()):
+        if int(e) in serious:
+            cnt[int(f)] += 1
+    for f, e in zip(ds.bouts.fencer_b_id.to_numpy(), ds.bouts.event_id.to_numpy()):
+        if int(e) in serious:
+            cnt[int(f)] += 1
+    return dict(cnt)
+
+
+@st.cache_data(show_spinner=False)
+def experience_band() -> dict:
+    """Fit skill = b0 + b1*ln(1+RYC+) per gender (rated fencers >= MIN_COHORT_BOUTS).
+    Returns {gender: {b0, b1, sigma, r2}} — the skill-for-serious-experience curve + band."""
+    sk = recent_skill_map()
+    ryc = _ryc_counts()
+    cnt, gender = _fencer_meta()
+    out = {}
+    for g in ("W", "M"):
+        fs = [f for f in sk if gender.get(f) == g and cnt.get(f, 0) >= MIN_COHORT_BOUTS]
+        if len(fs) < 30:
+            continue
+        x = np.log1p(np.array([ryc.get(f, 0) for f in fs], float))
+        y = np.array([sk[f] for f in fs])
+        Xa = np.column_stack([np.ones(len(y)), x])
+        b = np.linalg.lstsq(Xa, y, rcond=None)[0]
+        resid = y - Xa @ b
+        r2 = 1 - np.sum(resid ** 2) / np.sum((y - y.mean()) ** 2)
+        out[g] = {"b0": float(b[0]), "b1": float(b[1]), "sigma": float(resid.std()), "r2": float(r2)}
+    return out
+
+
+@st.cache_data(show_spinner=False)
+def experience_context(fencer_id: int) -> dict | None:
+    """A fencer's skill vs. what their serious-experience predicts: expected skill, actual,
+    and the residual in sigma (z > 0 = over-performs their RYC+ experience)."""
+    sk = recent_skill_map()
+    if fencer_id not in sk:
+        return None
+    _, gender = _fencer_meta()
+    band = experience_band().get(gender.get(fencer_id))
+    if band is None:
+        return None
+    e = _ryc_counts().get(fencer_id, 0)
+    exp = band["b0"] + band["b1"] * np.log1p(e)
+    act = sk[fencer_id]
+    return {"ryc": e, "expected": exp, "actual": act, "sigma": band["sigma"],
+            "z": (act - exp) / band["sigma"], "r2": band["r2"]}
+
+
+@st.cache_data(show_spinner=False)
+def experience_scatter(focal_id: int) -> dict | None:
+    """Data for the skill-vs-serious-experience chart: cohort points (focal's gender),
+    the fitted curve + -1/+1 sigma band, and the focal point."""
+    sk = recent_skill_map()
+    if focal_id not in sk:
+        return None
+    cnt, gender = _fencer_meta()
+    fg = gender.get(focal_id)
+    band = experience_band().get(fg)
+    if band is None:
+        return None
+    ryc = _ryc_counts()
+    fs = [f for f in sk if gender.get(f) == fg and cnt.get(f, 0) >= MIN_COHORT_BOUTS]
+    pts = pd.DataFrame({"ryc": [ryc.get(f, 0) for f in fs], "skill": [sk[f] for f in fs]})
+    xmax = int(np.percentile(pts["ryc"], 98)) or 1
+    xs = np.arange(0, xmax + 1)
+    exp = band["b0"] + band["b1"] * np.log1p(xs)
+    line = pd.DataFrame({"ryc": xs, "expected": exp,
+                         "lo": exp - band["sigma"], "hi": exp + band["sigma"]})
+    return {"points": pts, "line": line,
+            "focal": {"ryc": ryc.get(focal_id, 0), "skill": sk[focal_id]}}
 
 
 def skill_percentile(skill: float | None, skills: np.ndarray) -> float | None:

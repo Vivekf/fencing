@@ -166,6 +166,27 @@ def placement_density_quintiles(samples, n_field: int, fencer_name: str) -> alt.
     )
 
 
+def experience_band(data: dict, focal_name: str) -> alt.Chart | None:
+    """Skill vs. cumulative serious (RYC+) experience: cohort points, fitted log curve +
+    ±1σ band, focal fencer highlighted in red."""
+    if not data or data["points"].empty:
+        return None
+    pts, line, foc = data["points"], data["line"], data["focal"]
+    band = alt.Chart(line).mark_area(opacity=0.18, color="#6b7280").encode(
+        x=alt.X("ryc:Q", title="Cumulative serious (RYC+) bouts"), y="lo:Q", y2="hi:Q")
+    fit = alt.Chart(line).mark_line(color="#111827", strokeWidth=2.5).encode(
+        x="ryc:Q", y=alt.Y("expected:Q", title="Skill (s + club)"))
+    scat = alt.Chart(pts).mark_circle(size=22, opacity=0.30, color=ACCENT).encode(
+        x="ryc:Q", y="skill:Q",
+        tooltip=[alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")])
+    fp = alt.Chart(pd.DataFrame([foc])).mark_point(
+        size=220, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(
+        x="ryc:Q", y="skill:Q",
+        tooltip=[alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")])
+    return (band + scat + fit + fp).properties(
+        height=320, title=f"{focal_name} — skill vs. serious experience")
+
+
 def skill_trajectory(traj: pd.DataFrame) -> alt.Chart | None:
     """A fencer's monthly estimated skill over time."""
     if traj is None or traj.empty:

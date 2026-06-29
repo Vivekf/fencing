@@ -121,6 +121,17 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
     tchart = charts.skill_trajectory(ab.skill_trajectory(focal_id))
     show_chart(tchart)
 
+    ctx = ab.experience_context(focal_id)
+    esc = ab.experience_scatter(focal_id)
+    if ctx and esc:
+        st.markdown("##### Skill vs. serious (RYC+) experience")
+        show_chart(charts.experience_band(esc, focal_name))
+        where = "above" if ctx["z"] >= 0 else "below"
+        st.caption(
+            f"Her skill is **{ctx['z']:+.2f}σ {where}** the curve expected for her "
+            f"**{ctx['ryc']} serious bouts** (fit explains R²={ctx['r2']:.0%} of skill; "
+            f"band = ±1σ). Above the band = stronger than her competition volume predicts.")
+
     st.divider()
     st.caption("The rest of this page is factual and reflects the sidebar filters.")
     if fdf.empty:
@@ -288,10 +299,13 @@ def render_opponents_tab(focal_id: int, focal_name: str,
         is_focal = oid == focal_id
         r = faced.get(oid)
         sk = skill.get(oid)
+        ctx = ab.experience_context(oid)
         rows.append({
             "opponent_id": oid,
             "Opponent": data.display_name(oid) + ("  ★ (focal)" if is_focal else ""),
             "Est. skill": sk,
+            "vs exp (σ)": (round(ctx["z"], 2) if ctx else None),
+            "RYC+": (ctx["ryc"] if ctx else None),
             "Pctile": ab.skill_percentile(sk, skills_arr),
             "Upcoming": (not is_focal) and (oid in upcoming),
             "Bouts": 0 if is_focal else (int(r["bouts"]) if r is not None else 0),
@@ -308,6 +322,11 @@ def render_opponents_tab(focal_id: int, focal_name: str,
             "Est. skill": st.column_config.NumberColumn(
                 format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
                                     "blank if outside the rated cohort."),
+            "vs exp (σ)": st.column_config.NumberColumn(
+                format="%+.2f", help="Skill vs. what their serious (RYC+) experience predicts "
+                                     "(log fit). >0 = over-performs their volume (talent); "
+                                     "<0 = skill is volume-driven."),
+            "RYC+": st.column_config.NumberColumn(format="%d", help="Serious (regional-and-up) bouts"),
             "Pctile": st.column_config.ProgressColumn(
                 format="%.0f", min_value=0, max_value=100, help="Skill percentile among rated peers"),
             "Upcoming": st.column_config.CheckboxColumn(help="In one of her upcoming event fields"),
@@ -346,6 +365,12 @@ def render_scouting(focal_id: int, focal_name: str, opp_id: int,
         st.markdown(form_chips(rec))
     else:
         st.caption("No bout record on file (unrated / not yet scraped).")
+    ctx = ab.experience_context(opp_id)
+    if ctx:
+        where = "above" if ctx["z"] >= 0 else "below"
+        st.caption(f"**Skill vs. experience:** {ctx['z']:+.2f}σ {where} the curve expected for "
+                   f"their **{ctx['ryc']} serious (RYC+) bouts** — "
+                   f"{'over' if ctx['z'] >= 0 else 'under'}-performing their competition volume.")
     if opp_id == focal_id:
         st.caption("This is the focal fencer — shown for her skill ranking among the field.")
         return
