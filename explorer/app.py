@@ -129,10 +129,10 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
         where = "above" if ctx["z"] >= 0 else "below"
         st.caption(
             f"Her skill is **{ctx['z']:+.2f}σ {where}** the curve expected for her "
-            f"**{ctx['ryc']} serious (RYC+) bouts** — model `skill ~ ln(RYC+) + age` "
-            f"(R²={ctx['r2']:.0%}, band ±1σ, fencers with ≥{ab.MIN_RYC} serious bouts; "
-            f"points age-adjusted to age {esc.get('age')}). Above the band = stronger than "
-            f"her serious-competition volume predicts.")
+            f"**{ctx['ryc']} serious (RYC+) bouts** — model `skill ~ ln(RYC+)` "
+            f"(R²={ctx['r2']:.0%}, band ±1σ, fencers with ≥{ab.MIN_RYC} serious bouts). "
+            f"*Not* age-adjusted — being skilled young is itself talent. Above the band = "
+            f"stronger than her serious-competition volume predicts.")
 
     st.divider()
     st.caption("The rest of this page is factual and reflects the sidebar filters.")
@@ -325,9 +325,9 @@ def render_opponents_tab(focal_id: int, focal_name: str,
                 format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
                                     "blank if outside the rated cohort."),
             "vs exp (σ)": st.column_config.NumberColumn(
-                format="%+.2f", help="Skill vs. what serious (RYC+) experience + age predict "
-                                     "(log fit). >0 = over-performs their volume (talent); "
-                                     "blank if under 10 serious bouts (too little to judge)."),
+                format="%+.2f", help="Skill vs. what serious (RYC+) experience predicts "
+                                     "(log fit, not age-adjusted). >0 = over-performs their "
+                                     "volume (talent); blank if under 10 serious bouts."),
             "RYC+": st.column_config.NumberColumn(format="%d", help="Serious (regional-and-up) bouts"),
             "Pctile": st.column_config.ProgressColumn(
                 format="%.0f", min_value=0, max_value=100, help="Skill percentile among rated peers"),

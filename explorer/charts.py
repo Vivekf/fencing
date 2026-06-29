@@ -177,7 +177,7 @@ def experience_band(data: dict, focal_name: str) -> alt.Chart | None:
     tip = [alt.Tooltip("ryc:Q", title="RYC+ bouts"), alt.Tooltip("skill:Q", format="+.2f")]
     band = alt.Chart(line).mark_area(opacity=0.18, color="#6b7280").encode(x=xax, y="lo:Q", y2="hi:Q")
     fit = alt.Chart(line).mark_line(color="#111827", strokeWidth=2.5).encode(
-        x=xax, y=alt.Y("expected:Q", title="Skill (s + club), age-adjusted"))
+        x=xax, y=alt.Y("expected:Q", title="Skill (s + club)"))
     scat = alt.Chart(pts).mark_circle(size=24, opacity=0.30, color=ACCENT).encode(x=xax, y="skill:Q", tooltip=tip)
     fp = alt.Chart(pd.DataFrame([foc])).mark_point(
         size=240, filled=True, color=LOSS_COLOR, stroke="white", strokeWidth=1.5).encode(

@@ -100,54 +100,43 @@ def _ryc_counts() -> dict[int, int]:
 
 
 @st.cache_data(show_spinner=False)
-def _age_map() -> dict[int, float]:
-    """Current (latest-month) age per fencer, from birth year."""
-    _, fm = fit()
-    ms = fm.months[-1]
-    mdec = int(ms[:4]) + (int(ms[5:]) - 0.5) / 12.0
-    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
-    return {r[0]: mdec - r[1] for r in conn.execute("SELECT id, birth_year FROM fencers") if r[1]}
-
-
-@st.cache_data(show_spinner=False)
 def experience_band() -> dict:
-    """Per gender, fit skill = b0 + b_ryc*ln(1+RYC+) + b_age*age on fencers with real serious
-    experience (>= MIN_RYC RYC+ bouts and >= MIN_COHORT_BOUTS total). Age-controlled so the
-    residual is a clean talent signal. Returns coeffs, residual sigma, R²."""
-    sk, ryc, ages = recent_skill_map(), _ryc_counts(), _age_map()
+    """Per gender, fit skill = b0 + b1*ln(1+RYC+) on fencers with real serious experience
+    (>= MIN_RYC RYC+ bouts and >= MIN_COHORT_BOUTS total). Deliberately NOT age-adjusted:
+    being skilled young is itself talent, so we don't subtract it off (a negative,
+    selection-driven age term would perversely penalize precocious fencers)."""
+    sk, ryc = recent_skill_map(), _ryc_counts()
     cnt, gender = _fencer_meta()
     out = {}
     for g in ("W", "M"):
         fs = [f for f in sk if gender.get(f) == g and cnt.get(f, 0) >= MIN_COHORT_BOUTS
-              and ryc.get(f, 0) >= MIN_RYC and f in ages]
+              and ryc.get(f, 0) >= MIN_RYC]
         if len(fs) < 30:
             continue
         x = np.log1p(np.array([ryc[f] for f in fs], float))
-        a = np.array([ages[f] for f in fs])
         y = np.array([sk[f] for f in fs])
-        Xa = np.column_stack([np.ones(len(y)), x, a])
+        Xa = np.column_stack([np.ones(len(y)), x])
         b = np.linalg.lstsq(Xa, y, rcond=None)[0]
         resid = y - Xa @ b
         r2 = 1 - np.sum(resid ** 2) / np.sum((y - y.mean()) ** 2)
-        out[g] = {"b0": float(b[0]), "b_ryc": float(b[1]), "b_age": float(b[2]),
+        out[g] = {"b0": float(b[0]), "b1": float(b[1]),
                   "sigma": float(resid.std()), "r2": float(r2), "n": len(fs)}
     return out
 
 
 @st.cache_data(show_spinner=False)
 def experience_context(fencer_id: int) -> dict | None:
-    """Skill vs. what serious experience + age predict. None for fencers below MIN_RYC
-    (too little serious experience to contextualize). z > 0 = over-performs."""
+    """Skill vs. what serious experience predicts. None below MIN_RYC (too little serious
+    experience to contextualize). z > 0 = over-performs their serious-competition volume."""
     sk = recent_skill_map()
     ryc = _ryc_counts().get(fencer_id, 0)
     if fencer_id not in sk or ryc < MIN_RYC:
         return None
     _, gender = _fencer_meta()
     band = experience_band().get(gender.get(fencer_id))
-    ages = _age_map()
-    if band is None or fencer_id not in ages:
+    if band is None:
         return None
-    pred = band["b0"] + band["b_ryc"] * np.log1p(ryc) + band["b_age"] * ages[fencer_id]
+    pred = band["b0"] + band["b1"] * np.log1p(ryc)
     act = sk[fencer_id]
     return {"ryc": ryc, "expected": pred, "actual": act, "sigma": band["sigma"],
             "z": (act - pred) / band["sigma"], "r2": band["r2"]}
@@ -155,29 +144,27 @@ def experience_context(fencer_id: int) -> dict | None:
 
 @st.cache_data(show_spinner=False)
 def experience_scatter(focal_id: int) -> dict | None:
-    """Chart data: cohort points (focal's gender, >= MIN_RYC) with skill age-adjusted to the
-    focal's age, the fitted curve + ±1σ band at that age, and the focal point."""
+    """Chart data: cohort points (focal's gender, >= MIN_RYC), the fitted log curve + ±1σ
+    band, and the focal point."""
     sk = recent_skill_map()
     if focal_id not in sk:
         return None
     cnt, gender = _fencer_meta()
     fg = gender.get(focal_id)
     band = experience_band().get(fg)
-    ages, ryc = _age_map(), _ryc_counts()
-    if band is None or focal_id not in ages:
+    ryc = _ryc_counts()
+    if band is None:
         return None
-    fa = ages[focal_id]
     fs = [f for f in sk if gender.get(f) == fg and cnt.get(f, 0) >= MIN_COHORT_BOUTS
-          and ryc.get(f, 0) >= MIN_RYC and f in ages]
-    pts = pd.DataFrame({"ryc": [ryc[f] for f in fs],
-                        "skill": [sk[f] - band["b_age"] * (ages[f] - fa) for f in fs]})
+          and ryc.get(f, 0) >= MIN_RYC]
+    pts = pd.DataFrame({"ryc": [ryc[f] for f in fs], "skill": [sk[f] for f in fs]})
     xmax = max(int(np.percentile(pts["ryc"], 98)), MIN_RYC + 1)
     xs = np.arange(MIN_RYC, xmax + 1)
-    exp = band["b0"] + band["b_ryc"] * np.log1p(xs) + band["b_age"] * fa
+    exp = band["b0"] + band["b1"] * np.log1p(xs)
     line = pd.DataFrame({"ryc": xs, "expected": exp,
                          "lo": exp - band["sigma"], "hi": exp + band["sigma"]})
     return {"points": pts, "line": line,
-            "focal": {"ryc": ryc.get(focal_id, 0), "skill": sk[focal_id]}, "age": round(fa, 1)}
+            "focal": {"ryc": ryc.get(focal_id, 0), "skill": sk[focal_id]}}
 
 
 def skill_percentile(skill: float | None, skills: np.ndarray) -> float | None:
