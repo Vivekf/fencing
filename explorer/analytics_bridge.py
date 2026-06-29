@@ -217,8 +217,7 @@ def event_placement_df(event_id: int, n_sims: int = N_SIMS) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def skill_trajectory(focal_id: int) -> pd.DataFrame:
-    """Monthly club-adjusted ability over time (s_im + club effect), plus the experience-
-    band reference levels (expected skill for her cumulative RYC+ that month, and +0.5/+1/+2σ)."""
+    """Monthly club-adjusted ability over time (s_im + club effect, age-agnostic)."""
     ds, fm = fit()
     fidx = {f: i for i, f in enumerate(fm.fencer_ids)}
     if focal_id not in fidx:
@@ -226,23 +225,9 @@ def skill_trajectory(focal_id: int) -> pd.DataFrame:
     ca, _ = _strength_inputs()
     C = len(fm.c); ci = ca.get(focal_id, -1)
     cterm = float(fm.c[ci]) if 0 <= ci < C else 0.0
-    # focal's cumulative RYC+ bouts by month
-    ser = _serious_events()
-    a, b = ds.bouts.fencer_a_id.to_numpy(), ds.bouts.fencer_b_id.to_numpy()
-    ev, mo = ds.bouts.event_id.to_numpy(), ds.bouts.month_idx.to_numpy()
-    mine = ((a == focal_id) | (b == focal_id))
-    rm = np.sort(np.array([int(mo[i]) for i in np.nonzero(mine)[0] if int(ev[i]) in ser]))
-    _, gender = _fencer_meta()
-    band = experience_band().get(gender.get(focal_id))
     _, traj = fm._skill_lookup()
-    rows = []
-    for mi, s in traj.get(fidx[focal_id], []):
-        ryc = int(np.searchsorted(rm, mi, side="right"))
-        row = {"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s + cterm, "ryc": ryc}
-        if band:
-            exp = band["b0"] + band["b1"] * np.log1p(ryc); sg = band["sigma"]
-            row.update({"mean": exp, "p05": exp + 0.5 * sg, "p1": exp + sg, "p2": exp + 2 * sg})
-        rows.append(row)
+    rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s + cterm}
+            for mi, s in traj.get(fidx[focal_id], [])]
     return pd.DataFrame(rows)
 
 
