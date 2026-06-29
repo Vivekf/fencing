@@ -40,10 +40,10 @@ def fit():
 
 @st.cache_data(show_spinner=False)
 def recent_skill_map() -> dict[int, float]:
-    """Club-adjusted ability per modelled fencer: recent skill s_i + club main-effect
-    c_club_i (age-agnostic). s_i alone is only skill *relative to the club baseline*; adding
-    c_club restores cross-club comparability. The placement simulation adds the age term on
-    top (effective strength g = s + c + age)."""
+    """Club-adjusted ability per modelled fencer: current (last-month, pointwise) skill s_i
+    + club main-effect c_club_i (age-agnostic). s_i alone is only skill *relative to the club
+    baseline*; adding c_club restores cross-club comparability. The placement simulation adds
+    the age term on top (effective strength g = s + c + age)."""
     ds, fm = fit()
     s = FC.recent_skill(fm)
     ca, _ = _strength_inputs()

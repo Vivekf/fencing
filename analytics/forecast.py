@@ -78,21 +78,23 @@ def forecast_event(db_path, focal_id, event_id, *, since="2022-09",
     return fm, res, missing
 
 
-def recent_skill(fm, k=6):
-    """Smoothed recent skill (mean of last up-to-k active months) per modelled fencer."""
+def recent_skill(fm, k=6, pointwise=True):
+    """Per modelled fencer's current skill. pointwise=True (default) = last active month's
+    skill (the model's monthly s is already Brownian-smoothed at lam_time=400, so this is
+    stable and most current); pointwise=False = mean of the last up-to-k active months."""
     fidx = {f: i for i, f in enumerate(fm.fencer_ids)}
     _, traj = fm._skill_lookup()
     out = {}
     for f in fm.fencer_ids:
         t = traj.get(fidx[f], [])
         if t:
-            out[f] = float(np.mean([s for _, s in t[-k:]]))
+            out[f] = float(t[-1][1]) if pointwise else float(np.mean([s for _, s in t[-k:]]))
     return out
 
 
 def _effective_strength(fm, fids, club_a, by, event_year=2026.5, cold_prior=0.0):
-    """g_i = s_i + beta_age*age_i + club_main_effect. Uses the SAME recent-mean skill the
-    explorer displays (so ability and outcome are consistent). Additive antisymmetric
+    """g_i = s_i + beta_age*age_i + club_main_effect. Uses the SAME current (pointwise) skill
+    the explorer displays (so ability and outcome are consistent). Additive antisymmetric
     terms collapse to one number per fencer; unrated (cold) fencers get `cold_prior`
     (0 = population average; negative = the weaker-than-average prior for local unrateds)."""
     rs = recent_skill(fm)
