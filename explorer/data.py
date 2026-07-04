@@ -6,13 +6,16 @@ fencer-centric helpers. No writes, ever.
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-DB_PATH = Path(__file__).resolve().parent.parent / "fencing.db"
+DB_PATH = Path(
+    os.environ.get("FENCING_DB_PATH", Path(__file__).resolve().parent.parent / "fencing.db")
+)
 FRANCESCA_ID = 100835605
 POOL = "Pool"
 

@@ -1,0 +1,15 @@
+# Keep the Cloud Build upload small — the DB lives in GCS, not the image.
+.git
+.cache
+.pytest_cache
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+fencing.db
+fencing.db-shm
+fencing.db-wal
+*.db
+*.db-shm
+*.db-wal
+tests/
+*.tex
