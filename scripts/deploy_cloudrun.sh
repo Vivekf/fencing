@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # ---- fill these in --------------------------------------------------------
-PROJECT=your-project-id                 # gcloud projects list
+PROJECT=fencing-explorer-app            # gcloud projects list
 REGION=us-central1
 ALLOWED_USER=vivekf@gmail.com
 # ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ gcloud builds submit --tag "$IMAGE"
 gcloud run deploy "$SERVICE" \
   --image "$IMAGE" --region "$REGION" \
   --set-env-vars "DB_BUCKET_URI=${BUCKET}/fencing.db" \
-  --memory 1Gi --cpu 1 --min-instances 1 \
+  --memory 4Gi --cpu 2 --min-instances 1 --max-instances 1 \
   --no-allow-unauthenticated
 
 # 6. Let the service's identity read the DB bucket
