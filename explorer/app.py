@@ -278,14 +278,13 @@ def render_opponents_tab(focal_id: int, focal_name: str,
     names = data.name_map()
 
     def _lookup_label(i):
-        if i is None:
-            return "— look up any fencer —"
         nm = names.get(i, f"#{i}")
         c = faced_counts.get(i)
         return f"{nm}  ·  {c} bout{'s' if c != 1 else ''}" if c else f"{nm}  ·  not yet fenced"
 
     picked = st.selectbox("Look up any fencer (head-to-head / scouting)",
-                          [None] + all_ids, format_func=_lookup_label, key="opp_lookup")
+                          all_ids, format_func=_lookup_label, key="opp_lookup",
+                          index=None, placeholder="Type any part of a first or last name…")
 
     lb = data.opponent_leaderboard(focal_all)          # career record vs each faced opponent
     faced = {int(r["opponent_id"]): r for _, r in lb.iterrows()} if not lb.empty else {}
