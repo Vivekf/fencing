@@ -61,6 +61,7 @@ def scrape_event_results(
     event_id: int,
     *,
     opponent_hops: Optional[int] = None,
+    event_date: Optional[str] = None,
     use_cache: bool = False,
 ) -> EventResultStats:
     """Fetch + parse + persist a whole event field from `/event/{id}/results`.
@@ -81,10 +82,13 @@ def scrape_event_results(
         stats.skipped_bouts = res.skipped_bouts
 
         # COALESCE-based upsert: won't clobber richer metadata a history scrape recorded.
+        # event_date matters — the analytics model filters by date, so a null-dated event
+        # is silently dropped from the ratings. Prefer the page's date, else the caller's.
         db.upsert_event(
             conn, event_id=event_id, name=res.event_name, classification=res.event_name,
             weapon=res.weapon, gender=res.gender, age_group=res.age_group,
-            rating_level=None, event_date=None, raw_date=None,
+            rating_level=None, event_date=res.event_date or event_date,
+            raw_date=res.raw_date,
         )
 
         field_size = len(res.participants)

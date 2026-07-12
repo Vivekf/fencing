@@ -554,6 +554,8 @@ class EventResults:
     weapon: Optional[str]
     gender: Optional[str]
     age_group: Optional[str]
+    event_date: Optional[str] = None     # ISO 'YYYY-MM-DD' (needed by the date-filtered model)
+    raw_date: Optional[str] = None        # e.g. 'July 5, 2026'
     participants: List[ResultParticipant] = field(default_factory=list)
     bouts: List[ResultBout] = field(default_factory=list)
     skipped_bouts: int = 0    # squares whose opponent name didn't resolve to an id
@@ -604,6 +606,13 @@ def parse_event_results(html: str, event_id: int) -> EventResults:
     event_name = _text(soup.select_one("h1"))
     weapon, gender, age_group = _classify(event_name)
 
+    # Event date from the hero (e.g. "… Sunday, July 5, 2026"). The model filters by
+    # date, so a missing date silently drops the whole event from the ratings.
+    hero = soup.select_one(".event-results__hero, .ranking-hero")
+    dm = LONG_DATE_RE.search(hero.get_text(" ", strip=True) if hero else soup.get_text(" "))
+    raw_date = dm.group(1) if dm else None
+    event_date = _parse_long_date(raw_date) if raw_date else None
+
     table = soup.select_one("table.event-results__results-table")
     participants: List[ResultParticipant] = []
     name_to_id: dict[str, int] = {}
@@ -650,8 +659,8 @@ def parse_event_results(html: str, event_id: int) -> EventResults:
 
     return EventResults(
         event_id=event_id, event_name=event_name, weapon=weapon, gender=gender,
-        age_group=age_group, participants=participants,
-        bouts=_pair_directed(directed), skipped_bouts=skipped,
+        age_group=age_group, event_date=event_date, raw_date=raw_date,
+        participants=participants, bouts=_pair_directed(directed), skipped_bouts=skipped,
     )
 
 

@@ -18,6 +18,7 @@ def test_field_and_meta():
     r = _parsed()
     assert r.event_name == "Y-10 Women's Épée"
     assert (r.weapon, r.gender, r.age_group) == ("epee", "W", "Y10")
+    assert r.event_date == "2026-07-05"          # needed by the date-filtered model
     assert len(r.participants) == 104            # whole field from one request
     assert r.skipped_bouts == 0                  # every opponent name resolved
 
@@ -72,6 +73,8 @@ def test_ingest_and_idempotency(tmp_path=None):
     assert s.fencers_discovered == 104
     assert conn.execute("SELECT COUNT(*) FROM bouts").fetchone()[0] == 411
     assert db.event_results_ingested(conn, 41875) is True
+    # event_date must be persisted, else the date-filtered model drops the whole event.
+    assert conn.execute("SELECT event_date FROM events WHERE id=41875").fetchone()[0] == "2026-07-05"
     assert conn.execute(
         "SELECT COUNT(*) FROM fencer_event_results WHERE event_id=41875").fetchone()[0] == 104
 

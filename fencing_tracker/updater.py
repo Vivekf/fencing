@@ -241,7 +241,8 @@ def run_event_driven_update(
             stats.events_unresolved += 1
         else:
             try:
-                sub = scraper.scrape_event_results(conn, client, rid, opponent_hops=radius)
+                sub = scraper.scrape_event_results(
+                    conn, client, rid, opponent_hops=radius, event_date=ev["event_date"])
                 db.set_upcoming_results_event(conn, ev["event_id"], rid)
                 conn.commit()
                 stats.events_ingested += 1
