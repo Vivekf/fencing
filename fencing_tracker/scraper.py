@@ -250,6 +250,12 @@ def _persist_event(
         rating_earned=ev.focal_rating,
     )
 
+    # If this event's whole field was already ingested from /results (authoritative,
+    # Pool/DE granularity), skip the history-sourced bouts — inserting them under finer
+    # T-round labels would duplicate the same bout under a different primary key.
+    if db.event_results_ingested(conn, ev.event_id):
+        return
+
     # Y-8 (and similar) double round-robin pools repeat the same pair within one event.
     # Number repeats by row order so the PK can disambiguate.
     seq_counter: dict[tuple[int, str], int] = {}

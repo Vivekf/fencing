@@ -67,13 +67,21 @@ as `'DE'` would not dedup against the same bout previously stored as `'T8'`.
    `results_ingested_at`. Tested incl. idempotency (re-ingest adds 0).
 3. ✅ **DONE** `db.py` — `events.results_ingested_at` column + migration;
    `set_event_results_ingested()` / `event_results_ingested()`.
-4. **TODO** `updater.py` — core-registration scan (Option B) → date-triggered queue →
-   resolve results IDs via a participant's history → `scrape_event_results` → frontier.
-   Needs a `db.events_needing_results(...)` / watch-list query + a `last_update_at` watermark.
-5. **TODO** `cli.py` / `frontier.py` — `--mode event-driven|sweep`; **fix the `--max-new 0`
-   footgun** (currently 0 = unlimited; make 0 = off).
-6. ✅ **DONE (partial)** `tests/test_event_results.py` — parser + ingestion + idempotency.
-   Still to add: new-fencer-from-results respects frontier criteria (with updater).
+4. ✅ **DONE** `updater.run_event_driven_update()` — Stage A core-registration scan
+   (roster-deduped, `--max-core-scan` cap) → Stage B resolve results ID via focal-first
+   history parse (no persistence) + `scrape_event_results` → Stage C frontier. Watch-list
+   via `upcoming_events.results_event_id` bridge + `upcoming_events_awaiting_results()`.
+   `upcoming.ingest_event_roster()` extracted for cross-fencer dedupe. `_persist_event`
+   defers to results-ingested events (no T-round/DE duplication).
+5. ✅ **DONE** `cli.py` — `--mode event-driven|sweep` (default event-driven) +
+   `--max-core-scan`; `frontier` `--max-new 0` = off.
+6. ✅ **DONE** `tests/test_event_results.py` — parser, ingestion, idempotency, and the
+   history-defers-to-results guard. **Verified live**: capped run ingested event 41875's
+   full 104-fencer field (411 bouts) via prereg→results resolution.
+
+## Remaining
+- Real full run (uncapped `--max-core-scan`) on a copy, inspect, then promote to GCS.
+- Wire into the phase-2 Cloud Run Job + Scheduler; restart the app after DB swap.
 
 ## Test evidence captured
 

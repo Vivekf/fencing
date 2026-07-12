@@ -83,6 +83,33 @@ def test_ingest_and_idempotency(tmp_path=None):
     conn.close()
 
 
+def test_history_defers_to_results_ingested_event():
+    """Once an event is results-ingested, scraping a participant's history must NOT add
+    that event's bouts again (they'd land under finer T-round labels = duplicates)."""
+    import tempfile
+    from fencing_tracker import db, scraper, parsers
+    conn = db.connect(tempfile.mktemp(suffix=".db"))
+    db.init_schema(conn)
+    scraper.scrape_event_results(conn, _FakeClient(FIXTURE.read_text(encoding="utf-8")), 41875)
+    before = conn.execute("SELECT COUNT(*) FROM bouts WHERE event_id=41875").fetchone()[0]
+
+    # A history-sourced ParsedEvent for the same event, with a DE bout under a T-round label.
+    focal, opp = 100346109, 101311978            # Wong vs Louvot, both in the field
+    ev = parsers.ParsedEvent(
+        event_id=41875, tournament_name="X", classification=None, weapon="epee",
+        gender="W", age_group="Y10", rating_level=None, event_date="2026-07-05",
+        raw_date=None, focal_seed=None, focal_placement=None, focal_field_size=None,
+        focal_rating=None,
+        bouts=[parsers.ParsedBout(bout_type="T8", opponent_id=opp, opponent_name="LOUVOT Chloe",
+                                  opponent_slug=None, opponent_club=None, opponent_has_profile=True,
+                                  focal_score=15, opp_score=7, focal_won=True)],
+    )
+    scraper._persist_event(conn, focal, ev, None, False, None, scraper.ScrapeStats(focal, "u"))
+    after = conn.execute("SELECT COUNT(*) FROM bouts WHERE event_id=41875").fetchone()[0]
+    assert after == before, "history scrape must not add bouts to a results-ingested event"
+    conn.close()
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

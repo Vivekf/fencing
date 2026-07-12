@@ -108,7 +108,8 @@ CREATE TABLE IF NOT EXISTS upcoming_events (
     event_date      TEXT,                         -- ISO 'YYYY-MM-DD' if parsable
     field_size      INTEGER,                      -- count of registered fencers
     first_seen_at   TEXT NOT NULL,
-    last_scraped_at TEXT NOT NULL
+    last_scraped_at TEXT NOT NULL,
+    results_event_id INTEGER                       -- historical events.id once results ingested
 );
 
 -- The field: one row per fencer registered for an upcoming event. The focal fencer
@@ -157,6 +158,8 @@ def init_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE fencers ADD COLUMN birth_year INTEGER")
     if not _column_exists(conn, "events", "results_ingested_at"):
         conn.execute("ALTER TABLE events ADD COLUMN results_ingested_at TEXT")
+    if not _column_exists(conn, "upcoming_events", "results_event_id"):
+        conn.execute("ALTER TABLE upcoming_events ADD COLUMN results_event_id INTEGER")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_fencers_hops ON fencers(scrape_hops)")
     conn.commit()
 
@@ -372,6 +375,47 @@ def set_event_results_ingested(conn: sqlite3.Connection, event_id: int,
     """Mark an event as having had its whole field ingested from /event/{id}/results."""
     conn.execute("UPDATE events SET results_ingested_at = ? WHERE id = ?",
                  (ts or now_iso(), event_id))
+
+
+def upcoming_events_awaiting_results(conn: sqlite3.Connection,
+                                     today_iso: str) -> list[sqlite3.Row]:
+    """Past-dated upcoming (preregistered) events not yet resolved to ingested results.
+
+    These are the event-driven watch-list: their date has passed, so results should exist,
+    and we haven't yet linked+ingested them (`results_event_id` still NULL)."""
+    return conn.execute(
+        """
+        SELECT event_id, tournament_name, event_name, weapon, gender, age_group, event_date
+        FROM upcoming_events
+        WHERE event_date IS NOT NULL AND event_date < :today
+          AND results_event_id IS NULL
+        ORDER BY event_date DESC
+        """,
+        {"today": today_iso},
+    ).fetchall()
+
+
+def set_upcoming_results_event(conn: sqlite3.Connection, prereg_event_id: int,
+                               results_event_id: int) -> None:
+    """Record the prereg→historical bridge once an event's results are ingested."""
+    conn.execute("UPDATE upcoming_events SET results_event_id = ? WHERE event_id = ?",
+                 (results_event_id, prereg_event_id))
+
+
+def upcoming_registrants(conn: sqlite3.Connection,
+                         prereg_event_id: int) -> list[sqlite3.Row]:
+    """Registrants of an upcoming event with their slugs (for results-ID resolution),
+    profiled fencers first so we can scrape a scrapable participant's history."""
+    return conn.execute(
+        """
+        SELECT r.fencer_id, f.slug, f.has_profile, f.scrape_status
+        FROM upcoming_event_registrants r
+        JOIN fencers f ON f.id = r.fencer_id
+        WHERE r.event_id = ?
+        ORDER BY f.has_profile DESC, (f.scrape_status = 'done') DESC
+        """,
+        (prereg_event_id,),
+    ).fetchall()
 
 
 def event_results_ingested(conn: sqlite3.Connection, event_id: int) -> bool:

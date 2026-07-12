@@ -105,6 +105,36 @@ def cmd_update(args: argparse.Namespace) -> int:
     conn = db.connect(args.db)
     db.init_schema(conn)
     client = HttpClient(cache_dir=args.cache_dir, delay_seconds=args.delay)
+
+    if args.mode == "event-driven":
+        stats = updater.run_event_driven_update(
+            conn, client,
+            focal_id=args.focal, focal_slug=args.slug,
+            core_k=args.core_k, radius=args.radius,
+            youth_frac_min=args.youth_frac_min,
+            max_core_scan=args.max_core_scan,
+            max_new=args.max_new,
+            progress=not args.no_progress,
+        )
+        print()
+        print("Event-driven update complete.")
+        print(" Stage A — core registration scan:")
+        print(f"   core fencers scanned      : {stats.core_scanned}")
+        print(f"   scan errors               : {stats.scan_errors}")
+        _print_upcoming_stats(stats.upcoming, indent="   ")
+        print(" Stage B — completed-event ingestion:")
+        print(f"   events awaiting results   : {stats.events_awaiting}")
+        print(f"   events ingested           : {stats.events_ingested}")
+        print(f"   unresolved (no results yet): {stats.events_unresolved}")
+        print(f"   new bouts added           : {stats.bouts_added}")
+        print(f"   ingest errors             : {stats.ingest_errors}")
+        print(" Stage C — scrape-core expansion:")
+        _print_frontier_stats(stats.frontier, indent="   ")
+        _print_status(conn)
+        _print_upcoming(conn, focal_id=args.focal)
+        conn.close()
+        return 0
+
     stats = updater.run_update(
         conn, client,
         focal_id=args.focal, focal_slug=args.slug,
@@ -281,6 +311,13 @@ def main(argv: list[str] | None = None) -> int:
     p_update.add_argument("--slug", default=FRANCESCA_SLUG, help="Focal fencer URL slug")
     p_update.add_argument("--refresh-after-days", type=int, default=14,
                           help="Re-pull a fencer's history if older than this many days (default 14)")
+    p_update.add_argument("--mode", choices=["event-driven", "sweep"], default="event-driven",
+                          help="'event-driven' (default): scan core registrations, ingest "
+                               "completed events' whole fields from /results. 'sweep': legacy "
+                               "staleness refresh of every stale fencer history.")
+    p_update.add_argument("--max-core-scan", type=int, default=None,
+                          help="event-driven: cap how many core fencers' registrations to scan "
+                               "(default all; use a small N for quick test runs)")
     p_update.add_argument("--max-new", type=int, default=2000,
                           help="Max new fencers to scrape this run (default 2000; 0 = disable expansion)")
     p_update.add_argument("--core-k", type=int, default=3,

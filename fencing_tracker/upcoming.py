@@ -65,56 +65,67 @@ def refresh_upcoming(
     log.info("Found %d registration(s) for fencer %s", len(regs), fencer_id)
 
     for reg in regs:
-        if today_iso and reg.event_date and reg.event_date < today_iso:
-            stats.past_events_skipped += 1
-            log.info("Event %s on %s has passed; results come via history refresh",
-                     reg.event_id, reg.event_date)
-            continue
-        try:
-            html = client.get(EVENT_URL.format(event_id=reg.event_id), use_cache=False)
-            roster = parsers.parse_event_roster(html, event_id=reg.event_id)
-        except Exception:
-            stats.errors += 1
-            log.exception("Failed to fetch/parse roster for event %s", reg.event_id)
-            continue
+        ingest_event_roster(conn, client, reg, today_iso=today_iso, stats=stats)
 
-        # fencingtracker occasionally lists a fencer twice; keep distinct entrants.
-        unique_entries = list({e.fencer_id: e for e in roster.entries}.values())
+    return stats
 
-        db.upsert_upcoming_event(
-            conn,
-            event_id=reg.event_id,
-            tournament_name=roster.tournament_name or reg.tournament_name,
-            event_name=roster.event_name or reg.event_name,
-            classification=roster.classification,
-            weapon=roster.weapon,
-            gender=roster.gender,
-            age_group=roster.age_group,
-            venue=roster.venue,
-            location=roster.location,
-            start_datetime=roster.start_datetime,
-            event_date=roster.event_date or reg.event_date,
-            field_size=len(unique_entries),
-        )
 
-        registrants: list[tuple[int, Optional[str], Optional[str]]] = []
-        for entry in unique_entries:
-            is_new = db.ensure_fencer(
-                conn,
-                fencer_id=entry.fencer_id,
-                name=entry.name,
-                slug=entry.slug,
-                club=entry.club,
-                has_profile=True,
-            )
-            if is_new:
-                stats.new_fencers += 1
-            registrants.append((entry.fencer_id, entry.name, entry.club))
+def ingest_event_roster(
+    conn: sqlite3.Connection,
+    client: HttpClient,
+    reg: "parsers.UpcomingRegistration",
+    *,
+    today_iso: Optional[str] = None,
+    stats: Optional[UpcomingStats] = None,
+) -> UpcomingStats:
+    """Fetch + store one upcoming event's roster (skipping past-dated events). Idempotent —
+    the registrant list is replaced each call. Shared by the focal refresh and the core
+    registration scan (which dedupes event ids so each roster is fetched once)."""
+    stats = stats or UpcomingStats()
+    if today_iso and reg.event_date and reg.event_date < today_iso:
+        stats.past_events_skipped += 1
+        log.info("Event %s on %s has passed; results come via results ingestion",
+                 reg.event_id, reg.event_date)
+        return stats
+    try:
+        html = client.get(EVENT_URL.format(event_id=reg.event_id), use_cache=False)
+        roster = parsers.parse_event_roster(html, event_id=reg.event_id)
+    except Exception:
+        stats.errors += 1
+        log.exception("Failed to fetch/parse roster for event %s", reg.event_id)
+        return stats
 
-        db.replace_upcoming_registrants(conn, reg.event_id, registrants)
-        stats.future_events_scraped += 1
-        stats.registrants_total += len(registrants)
-        conn.commit()
-        log.info("Event %s: %d registrants", reg.event_id, len(registrants))
+    # fencingtracker occasionally lists a fencer twice; keep distinct entrants.
+    unique_entries = list({e.fencer_id: e for e in roster.entries}.values())
 
+    db.upsert_upcoming_event(
+        conn,
+        event_id=reg.event_id,
+        tournament_name=roster.tournament_name or reg.tournament_name,
+        event_name=roster.event_name or reg.event_name,
+        classification=roster.classification,
+        weapon=roster.weapon,
+        gender=roster.gender,
+        age_group=roster.age_group,
+        venue=roster.venue,
+        location=roster.location,
+        start_datetime=roster.start_datetime,
+        event_date=roster.event_date or reg.event_date,
+        field_size=len(unique_entries),
+    )
+
+    registrants: list[tuple[int, Optional[str], Optional[str]]] = []
+    for entry in unique_entries:
+        if db.ensure_fencer(
+            conn, fencer_id=entry.fencer_id, name=entry.name,
+            slug=entry.slug, club=entry.club, has_profile=True,
+        ):
+            stats.new_fencers += 1
+        registrants.append((entry.fencer_id, entry.name, entry.club))
+
+    db.replace_upcoming_registrants(conn, reg.event_id, registrants)
+    stats.future_events_scraped += 1
+    stats.registrants_total += len(registrants)
+    conn.commit()
+    log.info("Event %s: %d registrants", reg.event_id, len(registrants))
     return stats
