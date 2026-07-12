@@ -138,13 +138,17 @@ def _bar(progress: bool, total: int, desc: str, unit: str):
     return tqdm(total=total, desc=desc, unit=unit)
 
 
-def _core_scan_list(conn, core, focal_id, focal_slug, max_core_scan):
+def _core_scan_list(conn, core, focal_id, focal_slug, max_core_scan, adj=None):
     """Fencers to scan for registrations: focal first, then the rest of the core (with a
-    slug), capped at `max_core_scan` (None = all)."""
+    slug) ordered by core-connectivity desc, capped at `max_core_scan` (None = all).
+    Connectivity ordering makes a cap keep the most-relevant fencers (frequent opponents)."""
     slugs = dict(conn.execute("SELECT id, slug FROM fencers"))
-    ordered = [(focal_id, focal_slug or slugs.get(focal_id))]
-    ordered += [(fid, slugs.get(fid)) for fid in sorted(core)
-                if fid != focal_id and slugs.get(fid)]
+    rest = [f for f in core if f != focal_id and slugs.get(f)]
+    if adj is not None:
+        rest.sort(key=lambda x: len(adj.get(x, set()) & core), reverse=True)
+    else:
+        rest.sort()
+    ordered = [(focal_id, focal_slug or slugs.get(focal_id))] + [(f, slugs.get(f)) for f in rest]
     return ordered[:max_core_scan] if max_core_scan else ordered
 
 
@@ -199,9 +203,9 @@ def run_event_driven_update(
     stats = EventDrivenStats()
 
     # --- Stage A: core-registration scan -> watch-list of upcoming events ------
-    core, _, _ = frontier.compute_core(conn, focal_id, core_k, radius,
-                                       youth_frac_min=youth_frac_min)
-    scan_list = _core_scan_list(conn, core, focal_id, focal_slug, max_core_scan)
+    core, _, adj = frontier.compute_core(conn, focal_id, core_k, radius,
+                                         youth_frac_min=youth_frac_min)
+    scan_list = _core_scan_list(conn, core, focal_id, focal_slug, max_core_scan, adj)
     log.info("Stage A: scanning registrations for %d/%d core fencer(s)",
              len(scan_list), len(core))
     seen_events: set[int] = set()
