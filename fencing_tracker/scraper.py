@@ -18,6 +18,11 @@ from .http import HttpClient
 log = logging.getLogger(__name__)
 
 HISTORY_URL = "https://fencingtracker.com/p/{fencer_id}/{slug}/history"
+EVENT_RESULTS_URL = "https://fencingtracker.com/event/{event_id}/results"
+
+# source_fencer_id sentinel for bouts ingested from an event results page (no single
+# source fencer, unlike history-sourced bouts).
+RESULTS_SOURCE = 0
 
 
 @dataclass
@@ -34,6 +39,91 @@ class ScrapeStats:
 
 def history_url(fencer_id: int, slug: Optional[str]) -> str:
     return HISTORY_URL.format(fencer_id=fencer_id, slug=slug or "x")
+
+
+def event_results_url(event_id: int) -> str:
+    return EVENT_RESULTS_URL.format(event_id=event_id)
+
+
+@dataclass
+class EventResultStats:
+    event_id: int
+    participants: int = 0
+    bouts_seen: int = 0
+    bouts_inserted: int = 0
+    fencers_discovered: int = 0
+    skipped_bouts: int = 0          # squares whose opponent name didn't resolve
+
+
+def scrape_event_results(
+    conn: sqlite3.Connection,
+    client: HttpClient,
+    event_id: int,
+    *,
+    opponent_hops: Optional[int] = None,
+    use_cache: bool = False,
+) -> EventResultStats:
+    """Fetch + parse + persist a whole event field from `/event/{id}/results`.
+
+    A single request ingests every fencer's bouts for the event (Pool/DE granularity —
+    the results page does not carry the DE round). Every participant is ensured; new ones
+    are queued for frontier expansion when `opponent_hops` >= 1. On success the event is
+    marked results-ingested so it isn't re-pulled.
+    """
+    url = event_results_url(event_id)
+    stats = EventResultStats(event_id=event_id)
+    started = time.monotonic()
+    error_message: Optional[str] = None
+    try:
+        html = client.get(url, use_cache=use_cache)
+        res = parsers.parse_event_results(html, event_id)
+        stats.participants = len(res.participants)
+        stats.skipped_bouts = res.skipped_bouts
+
+        # COALESCE-based upsert: won't clobber richer metadata a history scrape recorded.
+        db.upsert_event(
+            conn, event_id=event_id, name=res.event_name, classification=res.event_name,
+            weapon=res.weapon, gender=res.gender, age_group=res.age_group,
+            rating_level=None, event_date=None, raw_date=None,
+        )
+
+        field_size = len(res.participants)
+        for p in res.participants:
+            if db.ensure_fencer(
+                conn, fencer_id=p.fencer_id, name=p.raw_name, slug=p.slug,
+                has_profile=True, scrape_hops=opponent_hops, gender=res.gender,
+            ):
+                stats.fencers_discovered += 1
+            db.upsert_fencer_event_result(
+                conn, fencer_id=p.fencer_id, event_id=event_id,
+                seed=None, placement=p.placement, field_size=field_size, rating_earned=None,
+            )
+
+        for b in res.bouts:                     # already canonical (fencer_a_id < fencer_b_id)
+            stats.bouts_seen += 1
+            if db.insert_bout(
+                conn, event_id=event_id,
+                fencer_a_id=b.fencer_a_id, fencer_b_id=b.fencer_b_id,
+                fencer_a_score=b.a_score, fencer_b_score=b.b_score,
+                winner_id=b.winner_id, bout_type=b.bout_type, bout_seq=b.bout_seq,
+                source_fencer_id=RESULTS_SOURCE,
+            ):
+                stats.bouts_inserted += 1
+
+        db.set_event_results_ingested(conn, event_id)
+    except Exception as exc:
+        error_message = f"{type(exc).__name__}: {exc}"
+        log.exception("scrape_event_results failed for event %s", event_id)
+        raise
+    finally:
+        db.log_scrape(
+            conn, fencer_id=None, url=url,
+            bouts_added=stats.bouts_inserted, fencers_added=stats.fencers_discovered,
+            duration_ms=int((time.monotonic() - started) * 1000),
+            error_message=error_message,
+        )
+        conn.commit()
+    return stats
 
 
 def scrape_fencer_history(

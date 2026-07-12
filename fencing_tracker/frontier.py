@@ -167,6 +167,14 @@ def expand_frontier(
     Recomputes the core after each batch, since scraping reveals new fencers that may
     themselves qualify; converges when no undone core member remains."""
     stats = FrontierStats()
+    # max_new: None = unlimited, 0 (or negative) = expansion disabled, N>0 = cap at N.
+    # (Previously 0 fell through the falsy `if max_new` checks and meant *unlimited* — a
+    # footgun. An explicit cap of 0 now does nothing, matching the intuitive reading.)
+    if max_new is not None and max_new <= 0:
+        core, _, _ = compute_core(conn, focal_id, k, radius, youth_frac_min=youth_frac_min)
+        stats.core_size = len(core)
+        return stats
+
     reset = db.reset_in_progress(conn)
     if reset:
         conn.commit()

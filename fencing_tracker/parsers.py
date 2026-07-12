@@ -523,6 +523,138 @@ def parse_event_roster(html: str, event_id: Optional[int] = None) -> EventRoster
     )
 
 
+# -- Event results (whole-field ingestion) --------------------------------------
+
+@dataclass
+class ResultParticipant:
+    """One fencer's row on a `/event/{id}/results` page."""
+    fencer_id: int
+    name: str                 # normalized "First Last"
+    raw_name: str             # raw "SURNAME Given" as shown — used to resolve opponents
+    slug: Optional[str]
+    placement: Optional[int]  # final finish (the '#' column)
+
+
+@dataclass
+class ResultBout:
+    """A symmetric bout parsed from a results page. fencer_a_id < fencer_b_id."""
+    fencer_a_id: int
+    fencer_b_id: int
+    a_score: int
+    b_score: int
+    winner_id: int
+    bout_type: str            # 'Pool' | 'DE' (results pages don't carry the DE round)
+    bout_seq: int
+
+
+@dataclass
+class EventResults:
+    event_id: int
+    event_name: Optional[str]
+    weapon: Optional[str]
+    gender: Optional[str]
+    age_group: Optional[str]
+    participants: List[ResultParticipant] = field(default_factory=list)
+    bouts: List[ResultBout] = field(default_factory=list)
+    skipped_bouts: int = 0    # squares whose opponent name didn't resolve to an id
+
+
+# "5:1 vs. LOUVOT Chloe · Very Easy" -> (5, 1, "LOUVOT Chloe")
+BOUT_TITLE_RE = re.compile(r"^\s*(\d+)\s*:\s*(\d+)\s+vs\.?\s+(.+?)\s*[·|]", re.UNICODE)
+
+
+def _pair_directed(directed: list[tuple]) -> List[ResultBout]:
+    """Fold per-fencer directed bout views into symmetric bouts.
+
+    Each physical bout appears twice (once from each fencer's row). We key by the
+    unordered pair + bout_type and canonicalise to fencer_a_id < fencer_b_id, using
+    the low-id fencer's view when present (falling back to the high-id view). Repeats
+    of the same pair within a bout_type (e.g. Y8 double round-robin) get bout_seq 1,2,…
+    """
+    from collections import defaultdict
+    groups: dict[tuple, list[tuple]] = defaultdict(list)
+    for src, opp, sf, sa, won, bt in directed:
+        groups[(min(src, opp), max(src, opp), bt)].append((src, opp, sf, sa, won, bt))
+
+    out: List[ResultBout] = []
+    for (lo, hi, bt), items in groups.items():
+        los = [d for d in items if d[0] == lo]
+        his = [d for d in items if d[0] == hi]
+        for i in range(max(len(los), len(his))):
+            if i < len(los):
+                _, _, sf, sa, won, _ = los[i]
+                a_s, b_s, winner = sf, sa, (lo if won else hi)
+            else:
+                _, _, sf, sa, won, _ = his[i]              # only the hi-side view survived
+                a_s, b_s, winner = sa, sf, (hi if won else lo)
+            out.append(ResultBout(lo, hi, a_s, b_s, winner, bt, i + 1))
+    return out
+
+
+def parse_event_results(html: str, event_id: int) -> EventResults:
+    """Parse a `/event/{id}/results` page into the whole field + every bout.
+
+    The page is one row per fencer; each fencer's Pool and DE cells hold `span.square`
+    tooltips carrying score, opponent name and win/loss. Opponents are named (not linked),
+    so we resolve them via the table's own name→id map; ambiguous names are left unresolved
+    and counted in `skipped_bouts`. DE round (T8/…) is not present on this page.
+    """
+    from collections import Counter
+    soup = BeautifulSoup(html, "lxml")
+    event_name = _text(soup.select_one("h1"))
+    weapon, gender, age_group = _classify(event_name)
+
+    table = soup.select_one("table.event-results__results-table")
+    participants: List[ResultParticipant] = []
+    name_to_id: dict[str, int] = {}
+    rows_cells: list[tuple[int, list]] = []
+
+    for tr in (table.select("tbody tr") if table else []):
+        a = tr.select_one("a[href^='/p/']")
+        hm = PERSON_HREF_RE.match(a.get("href") or "") if a else None
+        if not hm:
+            continue
+        fid = int(hm.group(1))
+        raw = _text(a) or ""
+        first = tr.find(["td", "th"])
+        pm = re.match(r"^\s*(\d+)", first.get_text(strip=True)) if first else None
+        participants.append(ResultParticipant(
+            fencer_id=fid, name=_normalize_name(raw) or raw, raw_name=raw,
+            slug=hm.group(2), placement=int(pm.group(1)) if pm else None,
+        ))
+        name_to_id.setdefault(raw, fid)
+        bout_cells = [c for c in tr.find_all("td")
+                      if "event-results__bout-cell" in (c.get("class") or [])]
+        rows_cells.append((fid, bout_cells))
+
+    ambiguous = {n for n, c in Counter(p.raw_name for p in participants).items() if c > 1}
+
+    directed: list[tuple] = []
+    skipped = 0
+    for fid, bout_cells in rows_cells:
+        for ci, cell in enumerate(bout_cells):
+            bout_type = "Pool" if ci == 0 else "DE"
+            for sp in cell.select("span.square"):
+                title = sp.get("data-bs-title") or sp.get("title") or ""
+                m = BOUT_TITLE_RE.match(title)
+                if not m:
+                    skipped += 1
+                    continue
+                opp_raw = m.group(3).strip()
+                oid = None if opp_raw in ambiguous else name_to_id.get(opp_raw)
+                if oid is None or oid == fid:
+                    skipped += 1
+                    continue
+                won = (sp.get_text(strip=True).upper().startswith("V"))
+                directed.append((fid, oid, int(m.group(1)), int(m.group(2)), won, bout_type))
+
+    return EventResults(
+        event_id=event_id, event_name=event_name, weapon=weapon, gender=gender,
+        age_group=age_group, participants=participants,
+        bouts=_pair_directed(directed), skipped_bouts=skipped,
+    )
+
+
 def parse_birth_year(html: str) -> Optional[int]:
     """Birth year from the person hero header (`div.person-hero__birth-year`), e.g. 2016.
 

@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS events (
     rating_level    TEXT,
     event_date      TEXT,
     raw_date        TEXT,
-    first_seen_at   TEXT NOT NULL
+    first_seen_at   TEXT NOT NULL,
+    results_ingested_at TEXT           -- set when the whole field was ingested from /results
 );
 
 CREATE TABLE IF NOT EXISTS bouts (
@@ -154,6 +155,8 @@ def init_schema(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE fencers ADD COLUMN gender TEXT")
     if not _column_exists(conn, "fencers", "birth_year"):
         conn.execute("ALTER TABLE fencers ADD COLUMN birth_year INTEGER")
+    if not _column_exists(conn, "events", "results_ingested_at"):
+        conn.execute("ALTER TABLE events ADD COLUMN results_ingested_at TEXT")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_fencers_hops ON fencers(scrape_hops)")
     conn.commit()
 
@@ -362,6 +365,19 @@ def insert_bout(
         ),
     )
     return cur.rowcount > 0
+
+
+def set_event_results_ingested(conn: sqlite3.Connection, event_id: int,
+                               ts: Optional[str] = None) -> None:
+    """Mark an event as having had its whole field ingested from /event/{id}/results."""
+    conn.execute("UPDATE events SET results_ingested_at = ? WHERE id = ?",
+                 (ts or now_iso(), event_id))
+
+
+def event_results_ingested(conn: sqlite3.Connection, event_id: int) -> bool:
+    row = conn.execute("SELECT results_ingested_at FROM events WHERE id = ?",
+                       (event_id,)).fetchone()
+    return bool(row and row[0])
 
 
 def upsert_fencer_event_result(

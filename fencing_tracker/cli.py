@@ -282,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     p_update.add_argument("--refresh-after-days", type=int, default=14,
                           help="Re-pull a fencer's history if older than this many days (default 14)")
     p_update.add_argument("--max-new", type=int, default=2000,
-                          help="Max new fencers to scrape this run (default 2000)")
+                          help="Max new fencers to scrape this run (default 2000; 0 = disable expansion)")
     p_update.add_argument("--core-k", type=int, default=3,
                           help="Min distinct core opponents to admit a fencer (default 3)")
     p_update.add_argument("--radius", type=int, default=2,
