@@ -550,10 +550,11 @@ class ResultBout:
 @dataclass
 class EventResults:
     event_id: int
-    event_name: Optional[str]
-    weapon: Optional[str]
-    gender: Optional[str]
-    age_group: Optional[str]
+    event_name: Optional[str]          # sub-event, e.g. "Y-10 Women's Épée"
+    tournament_name: Optional[str] = None  # e.g. "Summer Nationals and July Challenge"
+    weapon: Optional[str] = None
+    gender: Optional[str] = None
+    age_group: Optional[str] = None
     event_date: Optional[str] = None     # ISO 'YYYY-MM-DD' (needed by the date-filtered model)
     raw_date: Optional[str] = None        # e.g. 'July 5, 2026'
     participants: List[ResultParticipant] = field(default_factory=list)
@@ -613,6 +614,17 @@ def parse_event_results(html: str, event_id: int) -> EventResults:
     raw_date = dm.group(1) if dm else None
     event_date = _parse_long_date(raw_date) if raw_date else None
 
+    # Tournament name lives in the hero <p> after the h1 ("Summer Nationals … | Difficulty
+    # Map"). Store it as events.name to match the history-scrape convention (so RYC+/NAC
+    # name classification works); the h1 sub-event goes to classification.
+    tournament_name = None
+    if hero is not None:
+        for p in hero.find_all("p"):
+            t = _text(p)
+            if t and t.lower() != "event results":
+                tournament_name = (t.split("|")[0].strip() or None)
+                break
+
     table = soup.select_one("table.event-results__results-table")
     participants: List[ResultParticipant] = []
     name_to_id: dict[str, int] = {}
@@ -658,8 +670,9 @@ def parse_event_results(html: str, event_id: int) -> EventResults:
                 directed.append((fid, oid, int(m.group(1)), int(m.group(2)), won, bout_type))
 
     return EventResults(
-        event_id=event_id, event_name=event_name, weapon=weapon, gender=gender,
-        age_group=age_group, event_date=event_date, raw_date=raw_date,
+        event_id=event_id, event_name=event_name, tournament_name=tournament_name,
+        weapon=weapon, gender=gender, age_group=age_group,
+        event_date=event_date, raw_date=raw_date,
         participants=participants, bouts=_pair_directed(directed), skipped_bouts=skipped,
     )
 

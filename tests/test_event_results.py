@@ -17,6 +17,7 @@ def _parsed():
 def test_field_and_meta():
     r = _parsed()
     assert r.event_name == "Y-10 Women's Épée"
+    assert r.tournament_name == "Summer Nationals and July Challenge"
     assert (r.weapon, r.gender, r.age_group) == ("epee", "W", "Y10")
     assert r.event_date == "2026-07-05"          # needed by the date-filtered model
     assert len(r.participants) == 104            # whole field from one request

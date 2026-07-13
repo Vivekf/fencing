@@ -66,6 +66,12 @@ class ModelConfig:
     lam_v: float = 1.0
     lam_c: float = 1.0
     lam_beta: float = 0.1
+    # Hierarchical club: instead of an additive fixed effect, treat the club as a PRIOR
+    # MEAN that each fencer's (absolute) skill is shrunk toward. Credibility w=N/(N+K)
+    # emerges with K proportional to lam_s, so a high-N fencer escapes the club entirely
+    # (club "wears off") while a low-N / unseen fencer defaults to their club mean.
+    hier_club: bool = False
+    lam_cm: float = 1.0           # ridge on club means toward the global mean
     use_club_pair: bool = False   # antisymmetric club-pair interaction D[club_i,club_j]
     lam_d: float = 1.0
     use_de_delta: bool = False    # per-fencer DE-vs-pool skill delta (delta_i - delta_j) on DE bouts
@@ -89,11 +95,12 @@ class FittedModel:
     cell_month: np.ndarray     # cell -> month index
     U: np.ndarray              # (F, k)
     V: np.ndarray              # (F, k)
-    c: np.ndarray              # (C,)
+    c: np.ndarray              # (C,)  additive club effect (empty when hier_club)
     beta_age: float
     beta_de: float
     sigma_pool: float
     sigma_de: float
+    cm: np.ndarray = field(default_factory=lambda: np.zeros(0))          # (C,) club means (hier_club)
     delta: np.ndarray = field(default_factory=lambda: np.zeros(0))       # per-fencer DE-vs-pool skill delta
     d: np.ndarray = field(default_factory=lambda: np.zeros(0))           # club-pair interaction (antisymmetric)
     n_club_cat: int = 0                                                  # popular clubs + 'other'
@@ -107,14 +114,23 @@ class FittedModel:
         the right call for predicting a future event. Unseen fencers contribute 0 skill
         and 0 matchup (cold start)."""
         a = df["a_idx"].to_numpy(); b = df["b_idx"].to_numpy()
-        mu = self.last_skill[a] - self.last_skill[b]
-        mu = mu + (np.einsum("bk,bk->b", self.U[a], self.V[b])
-                   - np.einsum("bk,bk->b", self.U[b], self.V[a]))
-        C = len(self.c)
+        hier = self.config.hier_club
+        C = len(self.cm) if hier else len(self.c)
         ca = df["club_a"].to_numpy().copy(); cb = df["club_b"].to_numpy().copy()
         ca[ca < 0] = C; cb[cb < 0] = C
-        cfull = np.concatenate([self.c, [0.0]])
-        mu = mu + cfull[ca] - cfull[cb]
+        if hier:
+            # Skill is absolute; an unseen fencer defaults to their club mean (the prior).
+            cmf = np.concatenate([self.cm, [0.0]])
+            sa = np.where(self.seen[a], self.last_skill[a], cmf[ca])
+            sb = np.where(self.seen[b], self.last_skill[b], cmf[cb])
+            mu = sa - sb
+        else:
+            mu = self.last_skill[a] - self.last_skill[b]
+        mu = mu + (np.einsum("bk,bk->b", self.U[a], self.V[b])
+                   - np.einsum("bk,bk->b", self.U[b], self.V[a]))
+        if not hier:                                     # additive club fixed effect
+            cfull = np.concatenate([self.c, [0.0]])
+            mu = mu + cfull[ca] - cfull[cb]
         if len(self.d) > 0 and self.n_club_cat >= 2:
             pid, sign, _ = _pair_ids(df["club_pop_a"].to_numpy(),
                                      df["club_pop_b"].to_numpy(), self.n_club_cat)
@@ -199,6 +215,11 @@ def _build_arrays(ds: Dataset, cfg: ModelConfig):
     clubA = b["club_a"].to_numpy(np.int64).copy(); clubA[clubA < 0] = C
     clubB = b["club_b"].to_numpy(np.int64).copy(); clubB[clubB < 0] = C
 
+    # Per-fencer club (stationary) and per-cell club, for the hierarchical prior anchor.
+    fencer_club = np.full(F, C, np.int64)
+    fencer_club[ai] = clubA; fencer_club[bi] = clubB
+    cell_club = fencer_club[cell_fencer]
+
     # Antisymmetric club-pair interaction (optional)
     P = (len(ds.popular_clubs) + 1) if cfg.use_club_pair else 0
     if P >= 2:
@@ -211,14 +232,16 @@ def _build_arrays(ds: Dataset, cfg: ModelConfig):
         ai=ai, bi=bi, mi=mi, z=z, de=de, agediff=agediff,
         cellA=cellA, cellB=cellB, Ns=len(keys), cell_fencer=cell_fencer, cell_month=cell_month,
         elo=elo, ehi=ehi, ew=ew, clubA=clubA, clubB=clubB, F=F, C=C,
+        fencer_club=fencer_club, cell_club=cell_club,
         pair_id=pair_id, pair_sign=pair_sign, npairs=npairs, P=P,
     )
 
 
-def _predict_mu(P, A, s, U, V, cfull, beta_age, beta_de, delta=None):
+def _predict_mu(P, A, s, U, V, cfull, beta_age, beta_de, delta=None, use_club=True):
     match = np.einsum("bk,bk->b", U[A["ai"]], V[A["bi"]]) - np.einsum("bk,bk->b", U[A["bi"]], V[A["ai"]])
-    cterm = cfull[A["clubA"]] - cfull[A["clubB"]]
-    mu = s[A["cellA"]] - s[A["cellB"]] + match + beta_age * A["agediff"] + cterm + beta_de * A["de"]
+    mu = s[A["cellA"]] - s[A["cellB"]] + match + beta_age * A["agediff"] + beta_de * A["de"]
+    if use_club:                      # additive club fixed effect (skipped under hier_club)
+        mu = mu + (cfull[A["clubA"]] - cfull[A["clubB"]])
     if delta is not None and len(delta) > 0:
         mu = mu + A["de"] * (delta[A["ai"]] - delta[A["bi"]])
     return mu
@@ -235,8 +258,13 @@ def _value_and_grad(A, cfg, w, params):
     elo, ehi, ew = A["elo"], A["ehi"], A["ew"]
     npairs = A["npairs"]; has_delta = len(delta) > 0
 
+    hier = cfg.hier_club
+    cm = params["cm"] if hier else None
+    cell_club = A["cell_club"]
+
     cfull = np.concatenate([c, [0.0]])
-    mu = _predict_mu(None, A, s, U, V, cfull, beta_age, beta_de, delta if has_delta else None)
+    mu = _predict_mu(None, A, s, U, V, cfull, beta_age, beta_de,
+                     delta if has_delta else None, use_club=not hier)
     if npairs > 0:
         dfull = np.concatenate([d, [0.0]])
         mu = mu + A["pair_sign"] * dfull[A["pair_id"]]
@@ -244,15 +272,26 @@ def _value_and_grad(A, cfg, w, params):
     g = 2.0 * w * r
 
     sm = s[ehi] - s[elo]
+    # Skill ridge target: 0 (fixed-effect club) or the fencer's club mean (hierarchical).
+    if hier:
+        cm_full = np.concatenate([cm, [0.0]])
+        sdiff = s - cm_full[cell_club]                 # deviation from club mean
+        skill_pen = cfg.lam_s * float(sdiff @ sdiff) + cfg.lam_cm * float(cm @ cm)
+        club_pen = 0.0
+    else:
+        sdiff = s
+        skill_pen = cfg.lam_s * float(s @ s)
+        club_pen = cfg.lam_c * float(c @ c)
+
     loss = (float(np.sum(w * r * r))
             + cfg.lam_time * float(np.sum(ew * sm * sm))
-            + cfg.lam_s * float(s @ s) + cfg.lam_u * float(np.sum(U * U))
-            + cfg.lam_v * float(np.sum(V * V)) + cfg.lam_c * float(c @ c)
+            + skill_pen + club_pen + cfg.lam_u * float(np.sum(U * U))
+            + cfg.lam_v * float(np.sum(V * V))
             + cfg.lam_beta * (beta_age ** 2 + beta_de ** 2)
             + (cfg.lam_d * float(d @ d) if npairs > 0 else 0.0)
             + (cfg.lam_delta * float(delta @ delta) if has_delta else 0.0))
 
-    gs = (np.bincount(cellA, g, Ns) - np.bincount(cellB, g, Ns)) + 2 * cfg.lam_s * s
+    gs = (np.bincount(cellA, g, Ns) - np.bincount(cellB, g, Ns)) + 2 * cfg.lam_s * sdiff
     sm_g = 2 * cfg.lam_time * ew * sm
     gs += np.bincount(ehi, sm_g, Ns) - np.bincount(elo, sm_g, Ns)
 
@@ -264,8 +303,14 @@ def _value_and_grad(A, cfg, w, params):
     gU += 2 * cfg.lam_u * U
     gV += 2 * cfg.lam_v * V
 
-    gc_full = np.bincount(clubA, g, C + 1) - np.bincount(clubB, g, C + 1)
-    gc = gc_full[:C] + 2 * cfg.lam_c * c
+    if hier:
+        # Club not in mu; club means are pulled toward the skills anchored to them.
+        gc = 2 * cfg.lam_c * c                          # inert (c unused, stays ~0)
+        gcm = (-2 * cfg.lam_s * np.bincount(cell_club, sdiff, C + 1)[:C]
+               + 2 * cfg.lam_cm * cm)
+    else:
+        gc_full = np.bincount(clubA, g, C + 1) - np.bincount(clubB, g, C + 1)
+        gc = gc_full[:C] + 2 * cfg.lam_c * c
 
     gba = float(np.sum(g * agediff)) + 2 * cfg.lam_beta * beta_age
     gbd = float(np.sum(g * de)) + 2 * cfg.lam_beta * beta_de
@@ -284,6 +329,8 @@ def _value_and_grad(A, cfg, w, params):
 
     grads = {"s": gs, "U": gU, "V": gV, "c": gc, "d": gd, "delta": gdelta,
              "beta_age": np.array(gba), "beta_de": np.array(gbd)}
+    if hier:
+        grads["cm"] = gcm
     return loss, grads
 
 
@@ -295,13 +342,17 @@ def _fit_once(A, cfg, w, init=None):
         s = np.zeros(Ns); U = 0.01 * rng.standard_normal((F, k)); V = 0.01 * rng.standard_normal((F, k))
         c = np.zeros(A["C"]); d = np.zeros(A["npairs"]); delta = np.zeros(ndelta)
         beta_age = 0.0; beta_de = 0.0
+        cm = np.zeros(A["C"]) if cfg.hier_club else None
     else:
         s, U, V, c, d, delta, beta_age, beta_de = (init[x].copy() if hasattr(init[x], "copy") else init[x]
                                                    for x in ("s", "U", "V", "c", "d", "delta", "beta_age", "beta_de"))
+        cm = init["cm"].copy() if cfg.hier_club else None
 
     # Adam state
     params = {"s": s, "U": U, "V": V, "c": c, "d": d, "delta": delta,
               "beta_age": np.array(beta_age), "beta_de": np.array(beta_de)}
+    if cfg.hier_club:
+        params["cm"] = cm
     mom = {key: np.zeros_like(val) for key, val in params.items()}
     vel = {key: np.zeros_like(val) for key, val in params.items()}
     b1, b2, eps = 0.9, 0.999, 1e-8
@@ -342,7 +393,8 @@ def fit(ds: Dataset, cfg: Optional[ModelConfig] = None, *, center_skill: bool = 
         # re-estimate sigmas from residuals
         cfull = np.concatenate([params["c"], [0.0]])
         mu = _predict_mu(None, A, params["s"], params["U"], params["V"], cfull,
-                         float(params["beta_age"]), float(params["beta_de"]))
+                         float(params["beta_age"]), float(params["beta_de"]),
+                         use_club=not cfg.hier_club)
         r = mu - A["z"]
         sigma_pool = float(np.sqrt(np.mean(r[~is_de] ** 2))) if (~is_de).any() else 1.0
         sigma_de = float(np.sqrt(np.mean(r[is_de] ** 2))) if is_de.any() else 1.0
@@ -352,10 +404,13 @@ def fit(ds: Dataset, cfg: Optional[ModelConfig] = None, *, center_skill: bool = 
     # establish, which forecasting (carry-forward to a future month) needs. So default
     # to a single global centering (sum over all cells = 0), which keeps the random-walk
     # levels comparable across time. `center_skill=False` leaves the raw fitted gauge.
-    s = params["s"]; cf, cm = A["cell_fencer"], A["cell_month"]
+    s = params["s"]; cf, cmo = A["cell_fencer"], A["cell_month"]
+    smean = float(s.mean()) if center_skill else 0.0
     if center_skill:
-        s = s - s.mean()
+        s = s - smean
     c = params["c"] - params["c"].mean() if len(params["c"]) else params["c"]
+    # Shift club means by the same gauge so seen skills and unseen club-mean fallbacks align.
+    club_mean = (params["cm"] - smean) if cfg.hier_club else np.zeros(0)
 
     # Carry-forward (last-known) skill per global fencer, and a "seen in training" mask.
     F = len(ds.fencer_ids)
@@ -363,7 +418,7 @@ def fit(ds: Dataset, cfg: Optional[ModelConfig] = None, *, center_skill: bool = 
     last_month = np.full(F, -1)
     seen = np.zeros(F, bool)
     for idx in range(len(s)):
-        fi, mi = int(cf[idx]), int(cm[idx])
+        fi, mi = int(cf[idx]), int(cmo[idx])
         seen[fi] = True
         if mi > last_month[fi]:
             last_month[fi] = mi
@@ -378,7 +433,7 @@ def fit(ds: Dataset, cfg: Optional[ModelConfig] = None, *, center_skill: bool = 
 
     return FittedModel(
         config=cfg, fencer_ids=ds.fencer_ids, months=ds.months, club_names=ds.club_names,
-        s=s, cell_fencer=cf, cell_month=cm, U=U, V=V, c=c,
+        s=s, cell_fencer=cf, cell_month=cmo, U=U, V=V, c=c, cm=club_mean,
         beta_age=float(params["beta_age"]), beta_de=float(params["beta_de"]),
         sigma_pool=sigma_pool, sigma_de=sigma_de,
         delta=delta, d=params["d"], n_club_cat=A["P"],

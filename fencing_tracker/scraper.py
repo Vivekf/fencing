@@ -85,7 +85,8 @@ def scrape_event_results(
         # event_date matters — the analytics model filters by date, so a null-dated event
         # is silently dropped from the ratings. Prefer the page's date, else the caller's.
         db.upsert_event(
-            conn, event_id=event_id, name=res.event_name, classification=res.event_name,
+            conn, event_id=event_id, name=res.tournament_name or res.event_name,
+            classification=res.event_name,
             weapon=res.weapon, gender=res.gender, age_group=res.age_group,
             rating_level=None, event_date=res.event_date or event_date,
             raw_date=res.raw_date,
