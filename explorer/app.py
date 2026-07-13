@@ -108,7 +108,7 @@ def render_overview(focal_id: int, focal_name: str, fdf: pd.DataFrame) -> None:
         c[1].metric(f"Rank among born-{byr['year']}", f"#{byr['rank']} / {byr['n']}")
         c[2].metric("Percentile (birth year)", f"{byr['pct']:.0f}%")
         gl = {"W": "women", "M": "men"}.get(byr.get("gender"), "")
-        cap = (f"Club-adjusted ability (skill + club effect, age-agnostic) vs. rated "
+        cap = (f"Estimated ability (age-agnostic; the club prior is baked into thin records and fades as a fencer builds a track record — not added on top) vs. rated "
                f"**{gl} épée fencers born {byr['year']}** with ≥{ab.MIN_COHORT_BOUTS} bouts "
                f"(her true same-age peers).")
         if cohort:
@@ -322,7 +322,7 @@ def render_opponents_tab(focal_id: int, focal_name: str,
         on_select="rerun", selection_mode="single-row",
         column_config={
             "Est. skill": st.column_config.NumberColumn(
-                format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
+                format="%.2f", help="Estimated ability (age-agnostic; the club prior is baked into thin records and fades as a fencer builds a track record — not added on top); "
                                     "blank if outside the rated cohort."),
             "vs exp (σ)": st.column_config.NumberColumn(
                 format="%+.2f", help="Skill vs. what serious (RYC+) experience predicts "
@@ -434,7 +434,7 @@ def render_upcoming_tab(focal_id: int, focal_name: str) -> None:
         column_config={
             "Born": st.column_config.NumberColumn(format="%d", help="Birth year — younger = disadvantaged"),
             "Skill": st.column_config.NumberColumn(
-                format="%.2f", help="Club-adjusted ability (skill + club effect, age-agnostic); "
+                format="%.2f", help="Estimated ability (age-agnostic; the club prior is baked into thin records and fades as a fencer builds a track record — not added on top); "
                                     "projected finish also factors in age"),
             "Exp. finish": st.column_config.NumberColumn(format="%.1f"),
         },

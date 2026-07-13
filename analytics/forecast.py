@@ -93,16 +93,25 @@ def recent_skill(fm, k=6, pointwise=True):
 
 
 def _effective_strength(fm, fids, club_a, by, event_year=2026.5, cold_prior=0.0):
-    """g_i = s_i + beta_age*age_i + club_main_effect. Uses the SAME current (pointwise) skill
+    """g_i = s_i + beta_age*age_i (+ club main-effect only for the legacy fixed-effect model).
+    Under the hierarchical club model s_i is absolute (already embeds the club prior) and an
+    unseen fencer defaults to their club mean, so no additive club term is used. Uses the
+    SAME current (pointwise) skill
     the explorer displays (so ability and outcome are consistent). Additive antisymmetric
     terms collapse to one number per fencer; unrated (cold) fencers get `cold_prior`
     (0 = population average; negative = the weaker-than-average prior for local unrateds)."""
     rs = recent_skill(fm)
-    C = len(fm.c)
+    hier = fm.config.hier_club
+    C = len(fm.cm) if hier else len(fm.c)
     g = np.zeros(len(fids))
     for k, x in enumerate(fids):
-        s = rs.get(x, cold_prior)
-        ci = club_a.get(x, -1); cterm = fm.c[ci] if 0 <= ci < C else 0.0
+        ci = club_a.get(x, -1)
+        if hier:                              # s already absolute; unseen -> club mean
+            s = rs[x] if x in rs else (float(fm.cm[ci]) if 0 <= ci < C else cold_prior)
+            cterm = 0.0
+        else:
+            s = rs.get(x, cold_prior)
+            cterm = fm.c[ci] if 0 <= ci < C else 0.0
         age = (event_year - by[x]) if by.get(x) else 0.0
         g[k] = s + fm.beta_age * age + cterm
     return g

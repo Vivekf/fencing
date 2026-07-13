@@ -34,22 +34,20 @@ SCATTER_MIN_RYC = 25    # only plot fencers with a reasonable serious-bout sampl
 def fit():
     ds = load_dataset(str(DB_PATH), core_only=True, since=SINCE,
                       birth_min=BIRTH_MIN, birth_max=BIRTH_MAX)
-    fm = M.fit(ds, M.ModelConfig(rank=0, lam_s=0.05, lam_time=400))
+    fm = M.fit(ds, M.ModelConfig(rank=0, hier_club=True, lam_s=3.0, lam_cm=3.0, lam_time=400))
     return ds, fm
 
 
 @st.cache_data(show_spinner=False)
 def recent_skill_map() -> dict[int, float]:
-    """Club-adjusted ability per modelled fencer: current (last-month, pointwise) skill s_i
-    + club main-effect c_club_i (age-agnostic). s_i alone is only skill *relative to the club
-    baseline*; adding c_club restores cross-club comparability. The placement simulation adds
-    the age term on top (effective strength g = s + c + age)."""
+    """Current (last-month, pointwise) ABSOLUTE ability s_i per modelled fencer.
+
+    Under the hierarchical club model s_i already embeds the club prior — a fencer is shrunk
+    toward their club mean when their record is thin and escapes it as they accumulate bouts —
+    so s_i is directly cross-club comparable and there is NO separate club effect to add. The
+    placement simulation adds only the age term on top (effective strength g = s + age)."""
     ds, fm = fit()
-    s = FC.recent_skill(fm)
-    ca, _ = _strength_inputs()
-    C = len(fm.c)
-    return {f: sv + (float(fm.c[ci]) if 0 <= (ci := ca.get(f, -1)) < C else 0.0)
-            for f, sv in s.items()}
+    return {f: float(sv) for f, sv in FC.recent_skill(fm).items()}
 
 
 @st.cache_data(show_spinner=False)
@@ -217,16 +215,14 @@ def event_placement_df(event_id: int, n_sims: int = N_SIMS) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def skill_trajectory(focal_id: int) -> pd.DataFrame:
-    """Monthly club-adjusted ability over time (s_im + club effect, age-agnostic)."""
+    """Monthly absolute ability over time (s_im; age-agnostic). Under the hierarchical club
+    model s_im already embeds the club prior, so no club effect is added."""
     ds, fm = fit()
     fidx = {f: i for i, f in enumerate(fm.fencer_ids)}
     if focal_id not in fidx:
         return pd.DataFrame()
-    ca, _ = _strength_inputs()
-    C = len(fm.c); ci = ca.get(focal_id, -1)
-    cterm = float(fm.c[ci]) if 0 <= ci < C else 0.0
     _, traj = fm._skill_lookup()
-    rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s + cterm}
+    rows = [{"month": pd.to_datetime(fm.months[mi] + "-01"), "skill": s}
             for mi, s in traj.get(fidx[focal_id], [])]
     return pd.DataFrame(rows)
 
